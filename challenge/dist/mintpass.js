@@ -1,3 +1,5 @@
+import Logger from "@plebbit/plebbit-logger";
+const log = Logger("pkc-js:challenge:mintpass");
 /**
  * Extract the publication from a challenge request message.
  * This function checks known publication fields (comment, vote, commentEdit, etc.)
@@ -139,7 +141,7 @@ async function initializeStores() {
                 bindingsStore.on("error", () => { });
             }
             catch (e) {
-                console.error("MintPass challenge: failed to initialize persistent stores", e);
+                log.error("failed to initialize persistent stores", e);
                 throw e;
             }
         })();
@@ -416,7 +418,7 @@ const validateMintPassOwnership = async (props) => {
         return undefined; // Success
     }
     catch (error) {
-        console.error("Failed to validate MintPass ownership:", error);
+        log.error("failed to validate MintPass ownership:", error);
         return "Failed to check MintPass NFT ownership. Please try again.";
     }
 };
@@ -491,7 +493,7 @@ const getChallenge = async ({ challengeSettings, challengeRequestMessage, subple
                     return { success: true };
                 const postErrorString = `Author (${authorWalletAddress}) failed MintPass verification (post-answer). ` +
                     `Error: ${postAnswerFailure}`;
-                console.log("MintPass challenge failed:", postErrorString);
+                log("challenge failed:", postErrorString);
                 return {
                     success: false,
                     error: postAnswerFailure || "Failed to verify MintPass"
@@ -502,7 +504,7 @@ const getChallenge = async ({ challengeSettings, challengeRequestMessage, subple
     }
     const errorString = `Author (${authorWalletAddress}) failed MintPass verification. ` +
         `Error: ${firstFailure}`;
-    console.log("MintPass challenge failed:", errorString);
+    log("challenge failed:", errorString);
     return {
         success: false,
         error: firstFailure || "Failed to verify MintPass"

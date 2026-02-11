@@ -10,6 +10,9 @@ import type {
     DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor
 } from "@plebbit/plebbit-js/dist/node/pubsub-messages/types.js";
 import type { Plebbit } from "@plebbit/plebbit-js/dist/node/plebbit/plebbit.js";
+import Logger from "@plebbit/plebbit-logger";
+
+const log = Logger("pkc-js:challenge:mintpass");
 
 /**
  * Extract the publication from a challenge request message.
@@ -168,7 +171,7 @@ async function initializeStores() {
                 transferCooldownStore.on("error", () => {});
                 bindingsStore.on("error", () => {});
             } catch (e) {
-                console.error("MintPass challenge: failed to initialize persistent stores", e);
+                log.error("failed to initialize persistent stores", e);
                 throw e;
             }
         })();
@@ -507,7 +510,7 @@ const validateMintPassOwnership = async (props: {
         return undefined; // Success
 
     } catch (error) {
-        console.error("Failed to validate MintPass ownership:", error);
+        log.error("failed to validate MintPass ownership:", error);
         return "Failed to check MintPass NFT ownership. Please try again.";
     }
 };
@@ -606,7 +609,7 @@ const getChallenge = async ({
                 const postErrorString =
                     `Author (${authorWalletAddress}) failed MintPass verification (post-answer). ` +
                     `Error: ${postAnswerFailure}`;
-                console.log("MintPass challenge failed:", postErrorString);
+                log("challenge failed:", postErrorString);
 
                 return {
                     success: false,
@@ -620,7 +623,7 @@ const getChallenge = async ({
     const errorString =
         `Author (${authorWalletAddress}) failed MintPass verification. ` +
         `Error: ${firstFailure}`;
-    console.log("MintPass challenge failed:", errorString);
+    log("challenge failed:", errorString);
 
     return {
         success: false,

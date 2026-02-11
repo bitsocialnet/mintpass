@@ -2244,6 +2244,12 @@
   dependencies:
     debug "4.3.4"
 
+"@plebbit/plebbit-logger@https://github.com/plebbit/plebbit-logger.git":
+  version "0.0.1"
+  resolved "https://github.com/plebbit/plebbit-logger.git#355a96d7659ed820047980049dfa627d30d83a69"
+  dependencies:
+    debug "4.3.4"
+
 "@plebbit/proper-lockfile@github:plebbit/node-proper-lockfile#7fd6332117340c1d3d98dd0afee2d31cc06f72b8":
   version "4.1.2"
   resolved "https://codeload.github.com/plebbit/node-proper-lockfile/tar.gz/7fd6332117340c1d3d98dd0afee2d31cc06f72b8"

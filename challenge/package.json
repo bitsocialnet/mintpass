@@ -30,6 +30,7 @@
     "release-notes": "conventional-changelog -p angular -r 1 > RELEASE_NOTES.md"
   },
   "dependencies": {
+    "@plebbit/plebbit-logger": "https://github.com/plebbit/plebbit-logger.git",
     "@keyv/sqlite": "^4.0.5",
     "env-paths": "^3.0.0",
     "keyv": "5.5.0",
