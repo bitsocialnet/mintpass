@@ -1,155 +1,340 @@
-import { env } from './env';
+import { env } from "./env";
 
-export type SendResult = {
-  attempted: boolean;
-  ok: boolean;
-  provider?: 'twilio';
+const VERIFY_PROVIDER = "twilio-verify" as const;
+
+export type SmsProviderError = {
+  provider: typeof VERIFY_PROVIDER;
   status?: number;
-  error?: string;
-  // Optional provider-specific diagnostics (safe to return to client)
   errorCode?: number | string;
   errorMessage?: string;
-  // Twilio message SID when available
+};
+
+type VerifyRequestOptions = {
+  timeoutMs?: number;
+  maxRetries?: number;
+  baseDelayMs?: number;
+  deviceIp?: string;
+};
+
+export type StartSmsVerificationResult = {
+  ok: boolean;
   sid?: string;
-  initialStatus?: string;
+  status?: string;
+  providerError?: SmsProviderError;
 };
 
-function toUrlEncoded(params: Record<string, string>): string {
+export type SmsVerificationFailureReason = "invalid_code" | "expired_or_invalid" | "provider_error";
+
+export type CheckSmsVerificationResult = {
+  ok: boolean;
+  sid?: string;
+  status?: string;
+  valid?: boolean;
+  reason?: SmsVerificationFailureReason;
+  providerError?: SmsProviderError;
+};
+
+type TwilioVerifyResponse = {
+  sid?: unknown;
+  status?: unknown;
+  valid?: unknown;
+};
+
+type VerifyPostResult =
+  | { ok: true; status: number; data: TwilioVerifyResponse }
+  | { ok: false; providerError: SmsProviderError };
+
+const EXPIRED_OR_INVALID_ERROR_CODES = new Set<number>([20404, 60202, 60203, 60212, 60213, 60224]);
+const INVALID_CODE_ERROR_CODES = new Set<number>([60200]);
+const EXPIRED_OR_INVALID_STATUS = new Set([
+  "canceled",
+  "expired",
+  "max_attempts_reached",
+  "denied",
+]);
+
+function toUrlEncoded(params: Record<string, string | undefined>): string {
   return Object.entries(params)
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-    .join('&');
+    .filter(([, value]) => typeof value === "string" && value.length > 0)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v as string)}`)
+    .join("&");
 }
-
-type SendOptions = {
-  timeoutMs?: number; // per-attempt timeout
-  maxRetries?: number; // number of retries on transient errors (not counting first attempt)
-  baseDelayMs?: number; // base backoff delay
-  statusCallbackUrl?: string; // Twilio StatusCallback URL to receive delivery updates
-};
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function sendOtpSms(
-  phoneE164: string,
-  code: string,
-  options: SendOptions = {}
-): Promise<SendResult> {
-  // Prefer Twilio if configured
-  if (env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && (env.TWILIO_MESSAGING_SERVICE_SID || env.SMS_SENDER_ID)) {
-    const accountSid = env.TWILIO_ACCOUNT_SID;
-    const authToken = env.TWILIO_AUTH_TOKEN;
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`;
-
-    const bodyParams: Record<string, string> = {
-      To: phoneE164,
-      Body: `Your MintPass verification code: ${code}`,
-    };
-    if (options.statusCallbackUrl && typeof options.statusCallbackUrl === 'string' && options.statusCallbackUrl.length > 0) {
-      bodyParams.StatusCallback = options.statusCallbackUrl;
-    }
-    if (env.TWILIO_MESSAGING_SERVICE_SID) {
-      bodyParams.MessagingServiceSid = env.TWILIO_MESSAGING_SERVICE_SID;
-    } else if (env.SMS_SENDER_ID) {
-      bodyParams.From = env.SMS_SENDER_ID;
-    }
-
-    const authorization = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-
-    const timeoutMs = Number.isFinite(options.timeoutMs) && (options.timeoutMs as number) > 0 ? (options.timeoutMs as number) : 6000;
-    const maxRetries = Number.isFinite(options.maxRetries) && (options.maxRetries as number) >= 0 ? (options.maxRetries as number) : 2;
-    const baseDelayMs = Number.isFinite(options.baseDelayMs) && (options.baseDelayMs as number) >= 0 ? (options.baseDelayMs as number) : 300;
-
-    let attempt = 0;
-    // attempts = 1 + maxRetries
-    while (attempt <= maxRetries) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            Authorization: `Basic ${authorization}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          // Do not log or expose OTP or secrets
-          body: toUrlEncoded(bodyParams),
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-
-        // Do not retry client errors (4xx)
-        if (res.ok) {
-          // Parse Twilio message resource response to extract SID and status
-          let sid: string | undefined;
-          let initialStatus: string | undefined;
-          try {
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-              const json = (await res.json()) as { sid?: string; status?: string } | undefined;
-              if (json) {
-                if (typeof json.sid === 'string') sid = json.sid;
-                if (typeof json.status === 'string') initialStatus = json.status;
-              }
-            }
-          } catch {
-            // Ignore parse errors; SID is optional for our flow
-          }
-          return { attempted: true, ok: true, provider: 'twilio', status: res.status, sid, initialStatus };
-        }
-        if (res.status >= 400 && res.status < 500) {
-          // Attempt to parse Twilio error payload for code/message
-          let errorCode: number | string | undefined;
-          let errorMessage: string | undefined;
-          try {
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-              const json = (await res.json()) as { code?: number; message?: string } | undefined;
-              if (json) {
-                if (typeof json.code === 'number' || typeof json.code === 'string') errorCode = json.code;
-                if (typeof json.message === 'string') errorMessage = json.message;
-              }
-            } else {
-              const text = await res.text();
-              errorMessage = typeof text === 'string' && text.length > 0 ? text.slice(0, 300) : undefined;
-            }
-          } catch {
-            // Ignore parse errors; fall back to generic messaging
-          }
-          return {
-            attempted: true,
-            ok: false,
-            provider: 'twilio',
-            status: res.status,
-            error: `Twilio responded with ${res.status}`,
-            errorCode,
-            errorMessage,
-          };
-        }
-
-        // 5xx - retry
-      } catch {
-        // Network error/timeout/abort -> considered transient, go to retry
-      } finally {
-        clearTimeout(timer);
-      }
-
-      attempt += 1;
-      if (attempt > maxRetries) {
-        break;
-      }
-      // Exponential backoff with jitter
-      const backoff = baseDelayMs * 2 ** (attempt - 1);
-      const jitter = Math.floor(Math.random() * (baseDelayMs / 2));
-      await sleep(backoff + jitter);
-    }
-
-    return { attempted: true, ok: false, provider: 'twilio', error: 'Twilio send failed after retries' };
-  }
-
-  // No provider configured; treat as success to allow smoke tests
-  return { attempted: false, ok: true };
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
+function asBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
+}
 
+function getNumericCode(value: number | string | undefined): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function normalizeProviderError(
+  status: number | undefined,
+  details: { errorCode?: number | string; errorMessage?: string } = {},
+): SmsProviderError {
+  return {
+    provider: VERIFY_PROVIDER,
+    status,
+    errorCode: details.errorCode,
+    errorMessage: details.errorMessage,
+  };
+}
+
+export function isProductionRuntime(): boolean {
+  return (process.env.VERCEL_ENV || "").toLowerCase() === "production";
+}
+
+export function isVerifyConfigured(): boolean {
+  return Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_VERIFY_SERVICE_SID);
+}
+
+export function shouldUseKvFallback(smokeTokenHeader: string | undefined): boolean {
+  if (isProductionRuntime()) return false;
+  if (!env.SMOKE_TEST_TOKEN) return false;
+  const incoming = (smokeTokenHeader || "").trim();
+  return incoming.length > 0 && incoming === env.SMOKE_TEST_TOKEN;
+}
+
+async function parseProviderErrorDetails(
+  res: Response,
+): Promise<{ errorCode?: number | string; errorMessage?: string }> {
+  try {
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const json = (await res.json()) as Record<string, unknown>;
+      const rawCode = json.code;
+      const rawMessage = json.message;
+      const errorCode =
+        typeof rawCode === "number" || typeof rawCode === "string"
+          ? (rawCode as number | string)
+          : undefined;
+      const errorMessage = typeof rawMessage === "string" ? rawMessage : undefined;
+      return { errorCode, errorMessage };
+    }
+
+    const text = await res.text();
+    return {
+      errorMessage: typeof text === "string" && text.length > 0 ? text.slice(0, 300) : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function twilioVerifyPost(
+  resource: "Verifications" | "VerificationCheck",
+  bodyParams: Record<string, string | undefined>,
+  options: VerifyRequestOptions = {},
+): Promise<VerifyPostResult> {
+  if (!isVerifyConfigured()) {
+    return {
+      ok: false,
+      providerError: normalizeProviderError(undefined, {
+        errorMessage: "Twilio Verify is not configured",
+      }),
+    };
+  }
+
+  const accountSid = env.TWILIO_ACCOUNT_SID as string;
+  const authToken = env.TWILIO_AUTH_TOKEN as string;
+  const verifyServiceSid = env.TWILIO_VERIFY_SERVICE_SID as string;
+  const url = `https://verify.twilio.com/v2/Services/${encodeURIComponent(verifyServiceSid)}/${resource}`;
+  const authorization = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+
+  const timeoutMs =
+    Number.isFinite(options.timeoutMs) && (options.timeoutMs as number) > 0
+      ? (options.timeoutMs as number)
+      : 6000;
+  const maxRetries =
+    Number.isFinite(options.maxRetries) && (options.maxRetries as number) >= 0
+      ? (options.maxRetries as number)
+      : 2;
+  const baseDelayMs =
+    Number.isFinite(options.baseDelayMs) && (options.baseDelayMs as number) >= 0
+      ? (options.baseDelayMs as number)
+      : 300;
+
+  let attempt = 0;
+  let lastProviderError: SmsProviderError | undefined;
+
+  while (attempt <= maxRetries) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${authorization}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: toUrlEncoded(bodyParams),
+        signal: controller.signal,
+      });
+
+      if (res.ok) {
+        let data: TwilioVerifyResponse = {};
+        try {
+          const contentType = res.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            data = (await res.json()) as TwilioVerifyResponse;
+          }
+        } catch {
+          data = {};
+        }
+        return { ok: true, status: res.status, data };
+      }
+
+      const details = await parseProviderErrorDetails(res);
+      const providerError = normalizeProviderError(res.status, details);
+      if (res.status >= 400 && res.status < 500) {
+        return { ok: false, providerError };
+      }
+
+      lastProviderError = providerError;
+    } catch {
+      lastProviderError = normalizeProviderError(undefined, {
+        errorMessage: "Twilio Verify request failed",
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    attempt += 1;
+    if (attempt > maxRetries) break;
+
+    const backoff = baseDelayMs * 2 ** (attempt - 1);
+    const jitter = Math.floor(Math.random() * (baseDelayMs / 2));
+    await sleep(backoff + jitter);
+  }
+
+  return {
+    ok: false,
+    providerError:
+      lastProviderError ||
+      normalizeProviderError(undefined, {
+        errorMessage: "Twilio Verify request failed after retries",
+      }),
+  };
+}
+
+function classifyProviderFailure(providerError: SmsProviderError): SmsVerificationFailureReason {
+  const code = getNumericCode(providerError.errorCode);
+  const message = (providerError.errorMessage || "").toLowerCase();
+
+  if (providerError.status === 404) return "expired_or_invalid";
+  if (code !== undefined && EXPIRED_OR_INVALID_ERROR_CODES.has(code)) return "expired_or_invalid";
+  if (code !== undefined && INVALID_CODE_ERROR_CODES.has(code)) return "invalid_code";
+
+  if (
+    message.includes("expired") ||
+    message.includes("not found") ||
+    message.includes("max check attempts") ||
+    message.includes("maximum check attempts") ||
+    message.includes("too many check") ||
+    message.includes("already canceled") ||
+    message.includes("already cancelled")
+  ) {
+    return "expired_or_invalid";
+  }
+
+  if (
+    message.includes("invalid code") ||
+    message.includes("incorrect") ||
+    message.includes("does not match") ||
+    message.includes("mismatch") ||
+    message.includes("wrong code")
+  ) {
+    return "invalid_code";
+  }
+
+  return "provider_error";
+}
+
+export async function startSmsVerification(
+  phoneE164: string,
+  options: VerifyRequestOptions = {},
+): Promise<StartSmsVerificationResult> {
+  const result = await twilioVerifyPost(
+    "Verifications",
+    {
+      To: phoneE164,
+      Channel: "sms",
+      DeviceIp: options.deviceIp,
+    },
+    options,
+  );
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      providerError: result.providerError,
+    };
+  }
+
+  return {
+    ok: true,
+    sid: asString(result.data.sid),
+    status: asString(result.data.status),
+  };
+}
+
+export async function checkSmsVerification(
+  phoneE164: string,
+  code: string,
+  options: VerifyRequestOptions = {},
+): Promise<CheckSmsVerificationResult> {
+  const result = await twilioVerifyPost(
+    "VerificationCheck",
+    {
+      To: phoneE164,
+      Code: code,
+      DeviceIp: options.deviceIp,
+    },
+    options,
+  );
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: classifyProviderFailure(result.providerError),
+      providerError: result.providerError,
+    };
+  }
+
+  const status = asString(result.data.status);
+  const valid = asBoolean(result.data.valid);
+  const normalizedStatus = (status || "").toLowerCase();
+  const isApproved = normalizedStatus === "approved" || valid === true;
+  if (isApproved) {
+    return {
+      ok: true,
+      sid: asString(result.data.sid),
+      status,
+      valid,
+    };
+  }
+
+  const reason = EXPIRED_OR_INVALID_STATUS.has(normalizedStatus)
+    ? "expired_or_invalid"
+    : "invalid_code";
+  return {
+    ok: false,
+    sid: asString(result.data.sid),
+    status,
+    valid,
+    reason,
+  };
+}

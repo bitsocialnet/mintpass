@@ -14,19 +14,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-// Countries that Twilio doesn't support for SMS due to security/regulatory reasons
+// Countries restricted for SMS verification due to policy and security reasons
 const UNSUPPORTED_COUNTRIES: RPNInput.Country[] = [
   "AF", // Afghanistan
   "BY", // Belarus
-  "CA", // Canada
   "CU", // Cuba
   "IR", // Iran
   "IL", // Israel
@@ -34,7 +29,6 @@ const UNSUPPORTED_COUNTRIES: RPNInput.Country[] = [
   "MM", // Myanmar
   "RU", // Russia
   "SY", // Syria
-  "US", // United States
   "VE", // Venezuela
   "AZ", // Azerbaijan
   "BD", // Bangladesh
@@ -50,71 +44,63 @@ const UNSUPPORTED_COUNTRIES: RPNInput.Country[] = [
   "TN", // Tunisia
 ];
 
-type PhoneInputProps = Omit<
-  React.ComponentProps<"input">,
-  "onChange" | "value" | "ref"
-> &
+type PhoneInputProps = Omit<React.ComponentProps<"input">, "onChange" | "value" | "ref"> &
   Omit<RPNInput.Props<typeof RPNInput.default>, "onChange"> & {
     onChange?: (value: RPNInput.Value) => void;
     onCountryChange?: (country: RPNInput.Country | undefined) => void;
   };
 
-const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
-  React.forwardRef<React.ElementRef<typeof RPNInput.default>, PhoneInputProps>(
-    ({ className, onChange, onCountryChange, value, ...props }, ref) => {
-      return (
-        <RPNInput.default
-          ref={ref}
-          className={cn("flex", className)}
-          flagComponent={FlagComponent}
-          countrySelectComponent={CountrySelect}
-          inputComponent={InputComponent}
-          smartCaret={false}
-          value={value || undefined}
-          /**
-           * Handles the onChange event.
-           *
-           * react-phone-number-input might trigger the onChange event as undefined
-           * when a valid phone number is not entered. To prevent this,
-           * the value is coerced to an empty string.
-           *
-           * @param {E164Number | undefined} value - The entered value
-           */
-          onChange={(value) => {
-            const phoneValue = value || ("" as RPNInput.Value);
-            onChange?.(phoneValue);
-            
-            // Extract country from phone number and call onCountryChange
-            if (onCountryChange) {
-              let country: RPNInput.Country | undefined;
-              try {
-                if (phoneValue) {
-                  const parsed = parsePhoneNumber(phoneValue);
-                  country = parsed?.country;
-                }
-              } catch {
-                // If parsing fails, country remains undefined
-              }
-              onCountryChange(country);
+const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwardRef<
+  React.ElementRef<typeof RPNInput.default>,
+  PhoneInputProps
+>(({ className, onChange, onCountryChange, value, ...props }, ref) => {
+  return (
+    <RPNInput.default
+      ref={ref}
+      className={cn("flex", className)}
+      flagComponent={FlagComponent}
+      countrySelectComponent={CountrySelect}
+      inputComponent={InputComponent}
+      smartCaret={false}
+      value={value || undefined}
+      /**
+       * Handles the onChange event.
+       *
+       * react-phone-number-input might trigger the onChange event as undefined
+       * when a valid phone number is not entered. To prevent this,
+       * the value is coerced to an empty string.
+       *
+       * @param {E164Number | undefined} value - The entered value
+       */
+      onChange={(value) => {
+        const phoneValue = value || ("" as RPNInput.Value);
+        onChange?.(phoneValue);
+
+        // Extract country from phone number and call onCountryChange
+        if (onCountryChange) {
+          let country: RPNInput.Country | undefined;
+          try {
+            if (phoneValue) {
+              const parsed = parsePhoneNumber(phoneValue);
+              country = parsed?.country;
             }
-          }}
-          {...props}
-        />
-      );
-    },
+          } catch {
+            // If parsing fails, country remains undefined
+          }
+          onCountryChange(country);
+        }
+      }}
+      {...props}
+    />
   );
+});
 PhoneInput.displayName = "PhoneInput";
 
-const InputComponent = React.forwardRef<
-  HTMLInputElement,
-  React.ComponentProps<"input">
->(({ className, ...props }, ref) => (
-  <Input
-    className={cn("rounded-e-lg rounded-s-none", className)}
-    {...props}
-    ref={ref}
-  />
-));
+const InputComponent = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, ...props }, ref) => (
+    <Input className={cn("rounded-e-lg rounded-s-none", className)} {...props} ref={ref} />
+  ),
+);
 InputComponent.displayName = "InputComponent";
 
 type CountryEntry = { label: string; value: RPNInput.Country | undefined };
@@ -138,7 +124,8 @@ const CountrySelect = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   // Detect mobile device - calculated during rendering (not expensive, no need for useMemo)
-  const isMobileDevice = typeof window !== 'undefined' && 
+  const isMobileDevice =
+    typeof window !== "undefined" &&
     /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
 
   // Track whether user has manually clicked the input (to allow manual search on mobile)
@@ -179,15 +166,9 @@ const CountrySelect = ({
           className="flex gap-1 rounded-e-none rounded-s-lg border-r-0 px-3 focus:z-10"
           disabled={disabled}
         >
-          <FlagComponent
-            country={selectedCountry}
-            countryName={selectedCountry}
-          />
+          <FlagComponent country={selectedCountry} countryName={selectedCountry} />
           <ChevronsUpDown
-            className={cn(
-              "-mr-2 size-4 opacity-50",
-              disabled ? "hidden" : "opacity-100",
-            )}
+            className={cn("-mr-2 size-4 opacity-50", disabled ? "hidden" : "opacity-100")}
           />
         </Button>
       </PopoverTrigger>
@@ -283,11 +264,8 @@ const CountrySelectOption = ({
   }, [country]);
 
   return (
-    <CommandItem 
-      className={cn(
-        "gap-2", 
-        !isSupported && "opacity-50 cursor-not-allowed"
-      )} 
+    <CommandItem
+      className={cn("gap-2", !isSupported && "opacity-50 cursor-not-allowed")}
       onSelect={handleSelect}
       disabled={!isSupported}
     >

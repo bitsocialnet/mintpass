@@ -1,11 +1,13 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Guard against accidental client bundling of this module
-if (typeof window !== 'undefined') {
-  throw new Error('env.ts must not be imported on the client');
+if (typeof window !== "undefined") {
+  throw new Error("env.ts must not be imported on the client");
 }
 
-const ethAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Must be a valid 0x-prefixed Ethereum address');
+const ethAddress = z
+  .string()
+  .regex(/^0x[a-fA-F0-9]{40}$/, "Must be a valid 0x-prefixed Ethereum address");
 
 const envSchema = z.object({
   // Vercel KV / Upstash Redis
@@ -15,21 +17,24 @@ const envSchema = z.object({
   // Secrets and provider keys (server-only)
   MINTER_PRIVATE_KEY: z.string().min(1).optional(),
   SMS_PROVIDER_API_KEY: z.string().optional(), // legacy/generic
-  // Twilio alphanumeric sender ID: 1-11 chars, must have at least one letter,
-  // only letters/digits/spaces allowed
-  SMS_SENDER_ID: z.string()
+  // Legacy sender ID env (deprecated for OTP Verify flow): 1-11 chars,
+  // must have at least one letter, only letters/digits/spaces allowed.
+  SMS_SENDER_ID: z
+    .string()
     .refine((val) => {
       if (!val) return true; // optional
       // If it starts with + it's a phone number, skip alphanumeric validation
-      if (val.startsWith('+')) return true;
+      if (val.startsWith("+")) return true;
       // Alphanumeric: max 11 chars, at least one letter, only [A-Za-z0-9 ]
       return val.length <= 11 && /[A-Za-z]/.test(val) && /^[A-Za-z0-9 ]+$/.test(val);
-    }, 'Alphanumeric sender ID must be 1-11 characters, contain at least one letter, and only use letters, digits, or spaces')
-    .optional(),        // generic sender id/from
+    }, "Alphanumeric sender ID must be 1-11 characters, contain at least one letter, and only use letters, digits, or spaces")
+    .optional(), // generic sender id/from
 
-  // Twilio (preferred)
+  // Twilio Verify (preferred OTP path)
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
+  // Legacy Twilio Messaging env (deprecated for OTP Verify flow)
   TWILIO_MESSAGING_SERVICE_SID: z.string().optional(),
 
   // On-chain Mint (Base Sepolia)
@@ -42,11 +47,11 @@ const envSchema = z.object({
   HASH_PEPPER: z.string().optional(),
 
   // Admin credentials (server-only)
-  ADMIN_PASSWORD: z
+  ADMIN_PASSWORD: z.string().min(12, "Admin password must be at least 12 characters").optional(),
+  ADMIN_SESSION_SECRET: z
     .string()
-    .min(12, 'Admin password must be at least 12 characters')
+    .min(32, "Admin session secret must be at least 32 characters")
     .optional(),
-  ADMIN_SESSION_SECRET: z.string().min(32, 'Admin session secret must be at least 32 characters').optional(),
   ADMIN_SESSION_MAX_LIFETIME_SECONDS: z.string().optional(),
 });
 
@@ -55,7 +60,10 @@ const parsed = envSchema.safeParse(process.env as Record<string, string>);
 if (!parsed.success) {
   // Do not crash builds in early scaffolding if envs are missing; warn instead
   // Runtime handlers will validate critical vars per-route.
-  console.warn('[env] Missing or invalid environment variables:', parsed.error.flatten().fieldErrors);
+  console.warn(
+    "[env] Missing or invalid environment variables:",
+    parsed.error.flatten().fieldErrors,
+  );
 }
 
 export const env = {
@@ -66,6 +74,7 @@ export const env = {
   SMS_SENDER_ID: process.env.SMS_SENDER_ID,
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+  TWILIO_VERIFY_SERVICE_SID: process.env.TWILIO_VERIFY_SERVICE_SID,
   TWILIO_MESSAGING_SERVICE_SID: process.env.TWILIO_MESSAGING_SERVICE_SID,
   MINTPASSV1_ADDRESS_BASE_SEPOLIA: process.env.MINTPASSV1_ADDRESS_BASE_SEPOLIA,
   BASE_SEPOLIA_RPC_URL: process.env.BASE_SEPOLIA_RPC_URL,
@@ -96,10 +105,8 @@ export function getAdminSessionMaxLifetimeSeconds(): number {
 
 export function requireEnv<K extends keyof typeof env>(key: K): NonNullable<(typeof env)[K]> {
   const value = env[key];
-  if (value === undefined || value === null || (typeof value === 'string' && value.length === 0)) {
+  if (value === undefined || value === null || (typeof value === "string" && value.length === 0)) {
     throw new Error(`Missing required env: ${String(key)}`);
   }
   return value as NonNullable<(typeof env)[K]>;
 }
-
-

@@ -1,26 +1,26 @@
-import { kv } from '@vercel/kv';
-import { hashIdentifier } from './hash';
+import { kv } from "@vercel/kv";
+import { hashIdentifier } from "./hash";
 
 const CODE_TTL_SECONDS = 5 * 60; // 5 minutes
 
 function codeKey(phoneE164: string) {
-  const h = hashIdentifier('phone', phoneE164);
+  const h = hashIdentifier("phone", phoneE164);
   return `sms:code:${h}`;
 }
 
 function verifiedKey(phoneE164: string) {
-  const h = hashIdentifier('phone', phoneE164);
+  const h = hashIdentifier("phone", phoneE164);
   return `sms:verified:${h}`;
 }
 
 function mintedKey(address: string) {
   const lower = address.toLowerCase();
-  const h = hashIdentifier('addr', lower);
+  const h = hashIdentifier("addr", lower);
   return `mint:address:${h}`;
 }
 
 function phoneMintedKey(phoneE164: string) {
-  const h = hashIdentifier('phone', phoneE164);
+  const h = hashIdentifier("phone", phoneE164);
   return `mint:phone:${h}`;
 }
 
@@ -43,7 +43,7 @@ export async function clearSmsCode(phoneE164: string) {
 }
 
 export async function markPhoneVerified(phoneE164: string) {
-  await kv.set(verifiedKey(phoneE164), '1', { ex: CODE_TTL_SECONDS });
+  await kv.set(verifiedKey(phoneE164), "1", { ex: CODE_TTL_SECONDS });
 }
 
 export async function isPhoneVerified(phoneE164: string) {
@@ -52,7 +52,7 @@ export async function isPhoneVerified(phoneE164: string) {
     v = await kv.get<string | number>(`sms:verified:${phoneE164}`);
   }
   // Normalize potential numeric deserialization from KV
-  return String(v) === '1';
+  return String(v) === "1";
 }
 
 export async function markMinted(address: string, phoneE164: string) {
@@ -64,29 +64,29 @@ export async function markMinted(address: string, phoneE164: string) {
 
 export async function hasMinted(address: string) {
   let v = await kv.get<string>(mintedKey(address));
-  if (!(typeof v === 'string' && v.length > 0)) {
+  if (!(typeof v === "string" && v.length > 0)) {
     v = await kv.get<string>(`mint:address:${address.toLowerCase()}`);
   }
-  return typeof v === 'string' && v.length > 0;
+  return typeof v === "string" && v.length > 0;
 }
 
 export async function hasPhoneMinted(phoneE164: string) {
   let v = await kv.get<string>(phoneMintedKey(phoneE164));
-  if (!(typeof v === 'string' && v.length > 0)) {
+  if (!(typeof v === "string" && v.length > 0)) {
     v = await kv.get<string>(`mint:phone:${phoneE164}`);
   }
-  return typeof v === 'string' && v.length > 0;
+  return typeof v === "string" && v.length > 0;
 }
 
 // --- Associations: phone/address -> hashed IPs ---
 function phoneIpsKey(phoneE164: string) {
-  const h = hashIdentifier('phone', phoneE164);
+  const h = hashIdentifier("phone", phoneE164);
   return `assoc:phone:ips:${h}`;
 }
 
 function addressIpsKey(address: string) {
   const lower = address.toLowerCase();
-  const h = hashIdentifier('addr', lower);
+  const h = hashIdentifier("addr", lower);
   return `assoc:addr:ips:${h}`;
 }
 
@@ -95,7 +95,7 @@ function addressIpsKey(address: string) {
  * Stores only the hashed IP to avoid retaining plaintext IPs.
  */
 export async function addIpAssociationForPhone(phoneE164: string, ip: string) {
-  const ipHash = hashIdentifier('ip', ip);
+  const ipHash = hashIdentifier("ip", ip);
   try {
     await kv.sadd(phoneIpsKey(phoneE164), ipHash);
   } catch {}
@@ -106,7 +106,7 @@ export async function addIpAssociationForPhone(phoneE164: string, ip: string) {
  * Stores only the hashed IP to avoid retaining plaintext IPs.
  */
 export async function addIpAssociationForAddress(address: string, ip: string) {
-  const ipHash = hashIdentifier('ip', ip);
+  const ipHash = hashIdentifier("ip", ip);
   try {
     await kv.sadd(addressIpsKey(address), ipHash);
   } catch {}
@@ -116,7 +116,9 @@ export async function addIpAssociationForAddress(address: string, ip: string) {
 export async function getHashedIpsForPhone(phoneE164: string): Promise<string[]> {
   try {
     const ips = await kv.smembers<string[]>(phoneIpsKey(phoneE164));
-    return Array.isArray(ips) ? ips.filter((v): v is string => typeof v === 'string' && v.length > 0) : [];
+    return Array.isArray(ips)
+      ? ips.filter((v): v is string => typeof v === "string" && v.length > 0)
+      : [];
   } catch {
     return [];
   }
@@ -126,42 +128,10 @@ export async function getHashedIpsForPhone(phoneE164: string): Promise<string[]>
 export async function getHashedIpsForAddress(address: string): Promise<string[]> {
   try {
     const ips = await kv.smembers<string[]>(addressIpsKey(address));
-    return Array.isArray(ips) ? ips.filter((v): v is string => typeof v === 'string' && v.length > 0) : [];
+    return Array.isArray(ips)
+      ? ips.filter((v): v is string => typeof v === "string" && v.length > 0)
+      : [];
   } catch {
     return [];
   }
 }
-
-// --- SMS Delivery Status by Message SID ---
-function smsStatusKey(messageSid: string) {
-  // We hash the SID to avoid leaking raw identifiers in DB keys
-  const h = hashIdentifier('generic', messageSid);
-  return `sms:status:${h}`;
-}
-
-export type SmsDeliveryStatus = {
-  status: string; // queued, sending, sent, delivered, undelivered, failed, etc.
-  errorCode?: number | string;
-  errorMessage?: string;
-  updatedAt: number; // epoch ms
-};
-
-export async function setSmsDeliveryStatus(messageSid: string, status: SmsDeliveryStatus) {
-  try {
-    await kv.set(smsStatusKey(messageSid), status, { ex: 60 * 60 }); // keep for 1 hour
-  } catch {}
-}
-
-export async function getSmsDeliveryStatus(messageSid: string): Promise<SmsDeliveryStatus | null> {
-  try {
-    const v = await kv.get<SmsDeliveryStatus>(smsStatusKey(messageSid));
-    if (v && typeof v === 'object' && typeof (v as { status?: unknown }).status === 'string') {
-      return v as SmsDeliveryStatus;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-

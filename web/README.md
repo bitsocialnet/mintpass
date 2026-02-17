@@ -5,18 +5,17 @@ Serverless website and API that power the SMS verification flow and NFT minting 
 ### How it works (code map)
 - UI: `src/pages/request/` — phone + OTP form, error handling, and success state
 - API routes:
-  - `POST /api/sms/send` → generate OTP, rate‑limit, optional IP/phone risk checks, send via provider
+  - `POST /api/sms/send` → rate-limit, optional IP/phone risk checks, then start Twilio Verify SMS (or non-prod smoke `kv-fallback`); returns `mode` (`verify` | `kv-fallback`)
   - `POST /api/sms/verify` → verify OTP, mark phone as verified
   - `POST /api/pre-check-eligibility` → quick check before sending code
   - `POST /api/check-eligibility` → final eligibility check before mint
   - `POST /api/mint` → on‑chain mint (when envs set) or record as minted
-  - `GET /api/sms/status` and `POST /api/sms/status-callback` → delivery telemetry (webhook + polling)
 - Libraries and helpers: `lib/` — KV (Upstash), rate‑limits, cooldowns, hashing, SMS provider adapter, IP/phone intelligence, and admin auth/session utilities
 
 ### Anti-Sybil and Security Requirements
 - **Phone number database**: Track used numbers; prevent reuse for minting.
 - **IP address tracking**: Rate limit per IP; detect abuse patterns.
-- **SMS verification state**: Store codes and expirations; mark verified.
+- **SMS verification state**: Verify with Twilio Verify; keep short-lived fallback codes only for smoke flow.
 - **Minter key security**: Private key only in Vercel env vars; never in code or logs.
 - **Rate limiting**: Global and per-route limits to mitigate spam.
 - **Geolocation filtering**: Optional country blocking via `middleware.ts`.
@@ -38,7 +37,7 @@ Serverless website and API that power the SMS verification flow and NFT minting 
    Settings for each DB: Plan = Pay as You Go, Primary Region = `iad1` (US‑East), Read Regions = none, Eviction = off, Auto‑upgrade = on.
 3. In Project Settings → Environment Variables, add:
    - `MINTER_PRIVATE_KEY` (server only)
-   - `SMS_PROVIDER_API_KEY` and `SMS_SENDER_ID` (if/when integrating a provider)
+   - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` (Verify mode; recommended for OTP)
    - `BLOCKED_COUNTRIES` (comma-separated ISO codes if needed)
    - `RATE_LIMIT_WINDOW_SECONDS`, `RATE_LIMIT_MAX_REQUESTS` (optional)
    - `IPQS_API_KEY` (optional) to enable IP reputation checks
@@ -76,7 +75,7 @@ Serverless website and API that power the SMS verification flow and NFT minting 
   - Run `yarn dev`
 
 ### API Routes
-- `POST /api/sms/send` → request SMS code (rate-limited; sends via Twilio if configured)
+- `POST /api/sms/send` → request SMS code (rate-limited; Verify-first with non-prod smoke fallback)
 - `POST /api/sms/verify` → verify code and mark phone as verified
 - `POST /api/check-eligibility` → confirm address + phone can mint
 - `POST /api/mint` → on-chain mint on Base Sepolia when envs are set; otherwise records local minted state. Requires `authorAddress` string; country is derived from `x-vercel-ip-country` header.
@@ -90,12 +89,10 @@ yarn dev
 To test API calls locally, use `curl` or your preferred REST client.
 
 ### Smoke test (prod/preview)
-Create local env files (not committed) with the correct Upstash REST URL/Token and target base URL:
+Create local env files (not committed) with the target base URL and test identifiers. Include Upstash REST URL/Token when you need `kv-fallback` full E2E:
 
 - `.env.smoke.prod` (for Production)
 ```
-KV_REST_API_URL=
-KV_REST_API_TOKEN=
 BASE_URL=https://mintpass.org
 PHONE=+15555550123
 ADDR=0x1111111111111111111111111111111111111111
@@ -120,8 +117,14 @@ yarn smoke:preview
 ```
 
 Notes:
+- The script inspects `POST /api/sms/send` response JSON for `mode` (`verify` | `kv-fallback`).
+- **mode=kv-fallback**: runs full E2E (fetch code from KV/debug → verify → eligibility → mint).
+- **mode=verify + prod**: send-health (send ok) + eligibility check only; OTP verify/mint skipped by design.
+- **mode=verify + preview**: full E2E only when fallback is used; otherwise OTP verify/mint skipped with clear message.
+- `KV_REST_API_URL` and `KV_REST_API_TOKEN` are required only when `mode=kv-fallback`.
+- `BYPASS_TOKEN` and `SMOKE_TEST_TOKEN` supported.
 - The script loads ENVFILE (if provided), then `.env.smoke.{prod|preview}`, then `.env.local`, then `.env`.
-- No SMS provider needed yet; the OTP is read from KV via REST for testing.
+- No SMS provider needed for kv-fallback; OTP is read from KV via REST for testing.
 - Cooldowns and rate limits apply; you may need to wait 120s for repeated runs.
  - If your Preview custom domain is protected via Vercel Auth and proxied by Cloudflare, prefer the vercel.app URL for smoke tests.
 
@@ -144,24 +147,9 @@ Required for runtime:
 - `KV_REST_API_URL`, `KV_REST_API_TOKEN`
 - `HASH_PEPPER` (optional; HMAC key for hashing identifiers used in KV keys)
 
-Optional for SMS provider (Twilio preferred):
-- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`
-- One of: `TWILIO_MESSAGING_SERVICE_SID` or `SMS_SENDER_ID`
-
-#### Branded SMS Sender (Alphanumeric Sender ID)
-
-To display "Mintpass" instead of a phone number as the SMS sender:
-
-1. **Via Messaging Service (recommended)**: In Twilio Console, create a Messaging Service. Under Sender Pool, add an Alphanumeric Sender ID (e.g., "Mintpass"). Use the Messaging Service SID as `TWILIO_MESSAGING_SERVICE_SID`.
-
-2. **Via direct sender ID**: Set `SMS_SENDER_ID` to an alphanumeric string like "Mintpass" instead of a phone number.
-
-**Requirements**: 1-11 characters, must include at least one letter, only letters/digits/spaces allowed.
-
-**Limitations**:
-- One-way only (recipients cannot reply)
-- Not supported in all countries; US/Canada require a phone number or A2P 10DLC registration
-- Check [Twilio's country support](https://support.twilio.com/hc/en-us/articles/223133767) before using
+Optional for SMS provider (Twilio Verify preferred):
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` — required in production for Verify mode. Create a Verify Service in Twilio Console and use its SID.
+- Legacy (kv-fallback only; deprecated for OTP): `TWILIO_MESSAGING_SERVICE_SID` or `SMS_SENDER_ID`
 
 Optional for on-chain mint (Base Sepolia):
 - `MINTER_PRIVATE_KEY`

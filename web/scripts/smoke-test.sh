@@ -42,11 +42,6 @@ if [[ -z "${BASE_URL}" ]]; then
   exit 1
 fi
 
-if [[ -z "${KV_REST_API_URL:-}" || -z "${KV_REST_API_TOKEN:-}" ]]; then
-  echo "ERROR: KV_REST_API_URL and KV_REST_API_TOKEN must be set for the target environment."
-  exit 1
-fi
-
 echo "Environment: $ENVIRONMENT"
 echo "Base URL:    $BASE_URL"
 echo "Phone:       $PHONE"
@@ -148,19 +143,78 @@ step() {
   echo "==> $1"
 }
 
+# Capture response body from last HTTP message in curl output (headers + blank line + body)
+extract_json_body() {
+  local file="$1"
+  awk 'NR==1{in_body=0} /^[[:space:]]*$/{if(NR>1)in_body=1;next} in_body{print}' "$file"
+}
+
+parse_mode() {
+  local body="$1"
+  local mode
+  if command -v node >/dev/null 2>&1; then
+    mode=$(printf '%s' "$body" | node -e "
+      let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
+        try{const j=JSON.parse(d);const m=j.mode;console.log((m==='verify'||m==='kv-fallback')?m:'kv-fallback');}catch{console.log('kv-fallback');}
+      });
+    " 2>/dev/null) || mode="kv-fallback"
+  else
+    mode=$(echo "$body" | sed -n 's/.*"mode"[[:space:]]*:[[:space:]]*"\(verify\|kv-fallback\)".*/\1/p' | head -1)
+    [[ -z "$mode" ]] && mode="kv-fallback"
+  fi
+  echo "$mode"
+}
+
+SEND_RESP_FILE=$(mktemp)
+trap 'rm -f "$COOKIE_JAR" "$SEND_RESP_FILE" >/dev/null 2>&1 || true' EXIT
+
 if [[ -n "${BYPASS_TOKEN:-}" ]]; then
   step "Set Vercel bypass cookie"
-  # Set the Vercel protection bypass cookie for this domain
   curl -sS -i -c "$COOKIE_JAR" \
     "$(with_bypass_param "$BASE_URL/?x-vercel-set-bypass-cookie=true")" >/dev/null || true
 fi
 
 step "Request SMS code"
-post_json "$BASE_URL/api/sms/send" "{\"phoneE164\":\"$PHONE\",\"address\":\"$ADDR\"}"
+post_json "$BASE_URL/api/sms/send" "{\"phoneE164\":\"$PHONE\",\"address\":\"$ADDR\"}" >"$SEND_RESP_FILE" 2>&1
+
+SEND_BODY=$(extract_json_body "$SEND_RESP_FILE")
+MODE=$(parse_mode "$SEND_BODY")
+
+# Check for send failure
+if echo "$SEND_BODY" | grep -qE '"error"'; then
+  echo "ERROR: Send failed. Response: $SEND_BODY"
+  exit 1
+fi
+
+echo "Send mode: $MODE"
+
+if [[ "$MODE" == "verify" ]]; then
+  if [[ "$ENVIRONMENT" == "prod" ]]; then
+    step "Send-health (send ok) + eligibility check (prod verify mode; skipping OTP/mint)"
+    post_json "$BASE_URL/api/pre-check-eligibility" "{\"address\":\"$ADDR\",\"phoneE164\":\"$PHONE\"}"
+    echo
+    echo "Done. (prod verify mode: OTP verify/mint skipped by design)"
+    exit 0
+  else
+    echo
+    echo "SKIP: mode=verify in $ENVIRONMENT — full E2E only when mode=kv-fallback."
+    echo "OTP verify and mint steps skipped."
+    step "Pre-check eligibility only"
+    post_json "$BASE_URL/api/pre-check-eligibility" "{\"address\":\"$ADDR\",\"phoneE164\":\"$PHONE\"}"
+    echo
+    echo "Done. (verify mode in non-prod: OTP/mint skipped)"
+    exit 0
+  fi
+fi
+
+# mode=kv-fallback: full E2E
+if [[ -z "${KV_REST_API_URL:-}" || -z "${KV_REST_API_TOKEN:-}" ]]; then
+  echo "ERROR: KV_REST_API_URL and KV_REST_API_TOKEN are required for mode=kv-fallback."
+  exit 1
+fi
 
 step "Fetch code"
 CODE=""
-# Try preview debug endpoint first when SMOKE_TEST_TOKEN is set
 if [[ -n "${SMOKE_TEST_TOKEN:-}" ]]; then
   for i in {1..4}; do
     CODE=$(debug_get_code)
@@ -169,7 +223,6 @@ if [[ -n "${SMOKE_TEST_TOKEN:-}" ]]; then
   done
 fi
 
-# Fallback to Upstash REST if needed
 if [[ -z "$CODE" ]]; then
   for i in {1..8}; do
     CODE=$(kv_get_code)
