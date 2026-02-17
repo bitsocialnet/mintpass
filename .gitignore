@@ -68,8 +68,6 @@ deployments/local/
 .coverage_cache/
 .coverage_contracts/
 
-.plebbit/
-
-.playwright-mcp
-
-.cursor/
+.plebbit
+.cursor
+.codex
