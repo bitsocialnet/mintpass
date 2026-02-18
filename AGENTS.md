@@ -84,11 +84,28 @@ yarn test:manual
 yarn clean
 ```
 
+## React Doctor (Advisory)
+
+React Doctor is advisory quality tooling for React architecture/perf/correctness checks. **Scope: `web/` only** (the Next.js app).
+
+**Standard commands** (run from `web/`):
+- `cd web && yarn doctor`, `cd web && yarn doctor:score`, `cd web && yarn doctor:verbose`
+
+**Trigger rules:**
+- Run after touching React UI logic (`components`, `hooks`, route/page/view files, state/store code used by UI).
+- Run before opening PRs that include React behavior changes.
+
+**Interpretation:**
+- Treat diagnostics as actionable recommendations.
+- Prioritize `error` diagnostics first, then `warning`.
+- Score is informative only; no merge blocking based on score yet.
+
 ## Scope-Driven Validation (Required)
 
 Run checks based on what you changed:
 
 - If you change `web/**`:
+  - `cd web && yarn doctor:score`
   - `cd web && yarn lint`
   - `cd web && yarn build`
   - If API flow changed and envs are available: run smoke test (`yarn smoke:preview` or `yarn smoke:prod`)
