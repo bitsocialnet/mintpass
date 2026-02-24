@@ -81,10 +81,15 @@ Serverless website and API that power the SMS verification flow and NFT minting 
 - `POST /api/mint` → on-chain mint on Base Sepolia when envs are set; otherwise records local minted state. Requires `authorAddress` string; country is derived from `x-vercel-ip-country` header.
 
 ### Local Development
+
+Requires [Portless](https://github.com/vercel-labs/portless): `npm install -g portless`
+
 ```bash
 yarn install
-yarn dev
+yarn dev         # http://mintpass.localhost:1355
 ```
+
+The dev server runs at http://mintpass.localhost:1355 via [Portless](https://port1355.dev/), which gives each Bitsocial project a stable, named URL instead of a random port. To bypass Portless: `PORTLESS=0 yarn dev`
 
 To test API calls locally, use `curl` or your preferred REST client.
 
