@@ -82,7 +82,7 @@ Serverless website and API that power the SMS verification flow and NFT minting 
 
 ### Local Development
 
-Requires [Portless](https://github.com/vercel-labs/portless): `npm install -g portless`
+Requires [Portless](https://github.com/vercel-labs/portless), installed with project dependencies via `yarn install`
 
 ```bash
 yarn install
