@@ -12,7 +12,7 @@ export function Footer() {
             Terms
           </Link>
           <a
-            href="https://github.com/plebbitlabs/mintpass"
+            href="https://github.com/bitsocialnet/mintpass"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm md:text-base font-medium text-muted-foreground transition-colors hover:text-foreground/80"
@@ -20,7 +20,7 @@ export function Footer() {
             GitHub
           </a>
           <a
-            href="mailto:tom@plebbitlabs.com"
+            href="mailto:contact@bitsocial.net"
             className="text-sm md:text-base font-medium text-muted-foreground transition-colors hover:text-foreground/80"
           >
             Contact
@@ -29,12 +29,12 @@ export function Footer() {
         <div className="flex flex-col items-center gap-2">
           <div className="text-xs text-muted-foreground text-center">
             <a 
-              href="https://plebbitlabs.com" 
+              href="https://bitsocialforge.com" 
               target="_blank" 
               rel="noopener noreferrer"
               className="hover:text-foreground/80 transition-colors"
             >
-              Plebbit Labs, Inc.
+              Bitsocial Forge, Inc.
             </a>
             {' '} • MIT License
           </div>
