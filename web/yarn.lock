@@ -3469,10 +3469,10 @@ pirates@^4.0.1:
   resolved "https://registry.yarnpkg.com/pirates/-/pirates-4.0.7.tgz#643b4a18c4257c8a65104b73f3049ce9a0a15e22"
   integrity sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==
 
-portless@0.5.2:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/portless/-/portless-0.5.2.tgz#ee405277721e54119c191f13fc6434a1dc06c42a"
-  integrity sha512-LnJvnFUduG4QSIDqc4og9WCLRA6L0+btA96nn6icY6cxyEAR44cnWaIxVzmw7y74KQ+R7zJM1HpenankphympA==
+portless@0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/portless/-/portless-0.7.0.tgz#3dc52b0b3a2de83fdeed487bb3009d291a8e0c95"
+  integrity sha512-rxreakOeTfgGcOpa4C5GSH4dra9xX4XIRunwRwtjp9g/ercLjkB/h4hT+4w0LQiIHER0xzxJ7sJxpBwEdtRZIg==
   dependencies:
     chalk "^5.3.0"
 
