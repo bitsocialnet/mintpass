@@ -17,22 +17,22 @@
     "challenge"
   ],
   "scripts": {
-    "install:all": "yarn install && yarn install:contracts && yarn install:challenge",
-    "install:contracts": "cd contracts && yarn install",
-    "install:challenge": "cd challenge && yarn install",
-    "build": "yarn build:contracts && yarn build:challenge && yarn publish:challenge",
-    "build:contracts": "cd contracts && yarn compile",
-    "build:challenge": "cd challenge && yarn build",
+    "install:all": "corepack yarn install && corepack yarn install:contracts && corepack yarn install:challenge",
+    "install:contracts": "cd contracts && corepack yarn install",
+    "install:challenge": "cd challenge && corepack yarn install",
+    "build": "corepack yarn build:contracts && corepack yarn build:challenge && corepack yarn publish:challenge",
+    "build:contracts": "cd contracts && corepack yarn compile",
+    "build:challenge": "cd challenge && corepack yarn build",
     "publish:challenge": "rm -rf dist/challenge && mkdir -p dist/challenge && cp -R challenge/dist/* dist/challenge/",
-    "test": "yarn test:contracts",
-    "test:contracts": "cd contracts && yarn test",
-    "test:challenge": "cd challenge && yarn test",
-    "test:challenge:local": "cd challenge && yarn test:local",
-    "deploy:base-sepolia": "cd contracts && yarn deploy:base-sepolia",
-    "deploy:base": "cd contracts && yarn deploy:base",
-    "clean": "yarn clean:contracts && yarn clean:challenge",
-    "clean:contracts": "cd contracts && yarn clean",
-    "clean:challenge": "cd challenge && yarn clean"
+    "test": "corepack yarn test:contracts",
+    "test:contracts": "cd contracts && corepack yarn test",
+    "test:challenge": "cd challenge && corepack yarn test",
+    "test:challenge:local": "cd challenge && corepack yarn test:local",
+    "deploy:base-sepolia": "cd contracts && corepack yarn deploy:base-sepolia",
+    "deploy:base": "cd contracts && corepack yarn deploy:base",
+    "clean": "corepack yarn clean:contracts && corepack yarn clean:challenge",
+    "clean:contracts": "cd contracts && corepack yarn clean",
+    "clean:challenge": "cd challenge && corepack yarn clean"
   },
   "keywords": [
     "nft",
@@ -44,7 +44,7 @@
   ],
   "dependencies": {
     "@keyv/sqlite": "^4.0.5",
-    "@plebbit/plebbit-js": "https://github.com/plebbit/plebbit-js.git#a21d896bd55c76070758dae65dc0693d1c3726db",
+    "@plebbit/plebbit-js": "https://codeload.github.com/plebbit/plebbit-js/tar.gz/a21d896bd55c76070758dae65dc0693d1c3726db",
     "env-paths": "^3.0.0",
     "keyv": "5.5.0",
     "viem": "2.45.0"
@@ -54,7 +54,7 @@
   },
   "engines": {
     "node": ">=22.0.0",
-    "yarn": ">=1.22.0"
+    "yarn": ">=4.0.0"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@4.13.0"
 }

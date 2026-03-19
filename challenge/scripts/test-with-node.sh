@@ -44,7 +44,7 @@ trap cleanup EXIT
 # Start Hardhat node in background
 echo -e "${YELLOW}🔧 Starting Hardhat node...${NC}"
 cd ../contracts
-npx hardhat node > /dev/null 2>&1 &
+corepack yarn hardhat node > /dev/null 2>&1 &
 NODE_PID=$!
 cd ../challenge
 
@@ -70,7 +70,7 @@ done
 # Run the tests
 echo -e "${YELLOW}🧪 Running integration tests...${NC}"
 cd ../contracts
-npx hardhat test ../challenge/test/mintpass-integration.test.js --network localhost
+corepack yarn hardhat test ../challenge/test/mintpass-integration.test.js --network localhost
 
 # Store exit code to return it at the end
 TEST_EXIT_CODE=$?

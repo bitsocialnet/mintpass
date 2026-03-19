@@ -1847,16 +1847,17 @@ describe("MintPass Challenge Integration Test", function () {
     const wallet1 = new ethers.Wallet(privateKeyHex1);
     
     // Create proper signature for the second author with the shared wallet
+    const sharedTimestamp = Math.floor(Date.now() / 1000);
     const messageToSign2 = JSON.stringify({
       domainSeparator: "plebbit-author-wallet",
       authorAddress: wallet1.address,  // Sign the ETH address
-      timestamp: Math.floor(Date.now() / 1000)
+      timestamp: sharedTimestamp
     });
     const signature2 = await wallet1.signMessage(messageToSign2);  // Same wallet signing for different author
 
     const ethWallet2 = {
       address: ethWallet1.address, // Same ETH address (shared wallet)
-      timestamp: Math.floor(Date.now() / 1000),
+      timestamp: sharedTimestamp,
       signature: {
         signature: signature2,  // Proper signature for second author
         publicKey: authorSigner2.publicKey,

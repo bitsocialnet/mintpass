@@ -25,17 +25,17 @@ This directory contains the MintPassV1 NFT smart contract for the MintPass authe
 
 1. **Install dependencies**:
    ```bash
-   yarn install
+   corepack yarn install
    ```
 
 2. **Compile contracts**:
    ```bash
-   yarn compile
+   corepack yarn compile
    ```
 
 3. **Run tests**:
    ```bash
-   yarn test
+   corepack yarn test
    ```
 
 4. **Deploy to Base Sepolia (testnet)**:
@@ -44,12 +44,12 @@ This directory contains the MintPassV1 NFT smart contract for the MintPass authe
    cp .env.example .env
    
    # Deploy
-   yarn deploy:base-sepolia
+   corepack yarn deploy:base-sepolia
    ```
 
 5. **Deploy to Base Mainnet**:
    ```bash
-   yarn deploy:base
+   corepack yarn deploy:base
    ```
 
 ## Environment Setup
@@ -100,12 +100,12 @@ The test suite covers:
 
 Run tests with:
 ```bash
-yarn test
+corepack yarn test
 ```
 
 For coverage report:
 ```bash
-yarn coverage
+corepack yarn coverage
 ```
 
 ## Gas Optimization

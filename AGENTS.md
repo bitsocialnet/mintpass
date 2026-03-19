@@ -28,7 +28,7 @@ Important:
 ## Stack
 
 - Node.js `>=22`
-- Yarn `1.22.x` (use Yarn, not npm/pnpm)
+- Yarn 4 via Corepack (use `corepack enable` once per machine; do not use npm/pnpm)
 - TypeScript (strict mode in `web`, `contracts`, `challenge`)
 - Web: Next.js 15, React 19, Tailwind, Radix/shadcn-style UI, Zod, Upstash/Vercel KV
 - Contracts: Solidity `0.8.24`, Hardhat, OpenZeppelin, ethers v6
@@ -39,49 +39,49 @@ Important:
 ### Root
 
 ```bash
-yarn install:all         # install root + contracts + challenge deps
-yarn build               # build contracts + challenge, then publish challenge artifact to dist/challenge
-yarn test                # contracts test suite
-yarn test:contracts
-yarn test:challenge
-yarn test:challenge:local
-yarn clean
+corepack yarn install:all         # install root + contracts + challenge deps
+corepack yarn build               # build contracts + challenge, then publish challenge artifact to dist/challenge
+corepack yarn test                # contracts test suite
+corepack yarn test:contracts
+corepack yarn test:challenge
+corepack yarn test:challenge:local
+corepack yarn clean
 ```
 
 ### Web (`web/`)
 
 ```bash
 cd web
-yarn install
-yarn dev                 # local dev server
-yarn build               # production build
-yarn start               # run built app
-yarn lint                # Next.js lint rules
-yarn smoke:preview       # preview smoke flow (requires env)
-yarn smoke:prod          # production smoke flow (requires env)
+corepack yarn install
+corepack yarn dev                 # local dev server
+corepack yarn build               # production build
+corepack yarn start               # run built app
+corepack yarn lint                # Next.js lint rules
+corepack yarn smoke:preview       # preview smoke flow (requires env)
+corepack yarn smoke:prod          # production smoke flow (requires env)
 ```
 
 ### Contracts (`contracts/`)
 
 ```bash
 cd contracts
-yarn install
-yarn compile
-yarn test
-yarn coverage
-yarn deploy:testnet
-yarn deploy:mainnet
+corepack yarn install
+corepack yarn compile
+corepack yarn test
+corepack yarn coverage
+corepack yarn deploy:testnet
+corepack yarn deploy:mainnet
 ```
 
 ### Challenge (`challenge/`)
 
 ```bash
 cd challenge
-yarn install
-yarn build
-yarn test                # automated local integration (hardhat + kubo)
-yarn test:manual
-yarn clean
+corepack yarn install
+corepack yarn build
+corepack yarn test                # automated local integration (hardhat + kubo)
+corepack yarn test:manual
+corepack yarn clean
 ```
 
 ## React Doctor (Advisory)

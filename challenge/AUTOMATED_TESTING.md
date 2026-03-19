@@ -9,8 +9,8 @@ This document describes the comprehensive automated testing system for the MintP
 The testing system includes an automated script that handles all infrastructure management:
 
 ```bash
-cd challenges
-yarn test
+cd challenge
+corepack yarn test
 ```
 
 This single command:
@@ -60,10 +60,10 @@ For development scenarios requiring manual infrastructure control:
 
 ```bash
 # Terminal 1: Start the Hardhat node manually
-cd contracts && npx hardhat node
+cd contracts && corepack yarn hardhat node
 
 # Terminal 2: Run tests against the existing node
-cd challenges && yarn test:manual
+cd challenge && corepack yarn test:manual
 ```
 
 This approach allows:
