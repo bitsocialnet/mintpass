@@ -23,6 +23,11 @@ This directory contains the MintPassV1 NFT smart contract for the MintPass authe
 
 ## Quick Start
 
+Contributor setup:
+1. Run `nvm install && nvm use`
+2. Run `corepack enable` once per machine
+3. Use plain `yarn install`, `yarn compile`, and `yarn test`
+
 1. **Install dependencies**:
    ```bash
    yarn install

@@ -27,8 +27,8 @@ Important:
 
 ## Stack
 
-- Node.js `>=22`
-- Yarn `1.22.x` (use Yarn, not npm/pnpm)
+- Node.js `22.12.0` via `.nvmrc`
+- Yarn 4 via Corepack (run `corepack enable` once per machine, then use plain `yarn`)
 - TypeScript (strict mode in `web`, `contracts`, `challenge`)
 - Web: Next.js 15, React 19, Tailwind, Radix/shadcn-style UI, Zod, Upstash/Vercel KV
 - Contracts: Solidity `0.8.24`, Hardhat, OpenZeppelin, ethers v6
@@ -39,9 +39,9 @@ Important:
 ### Root
 
 ```bash
-yarn install:all         # install root + contracts + challenge deps
-yarn build               # build contracts + challenge, then publish challenge artifact to dist/challenge
-yarn test                # contracts test suite
+yarn install                      # install root + contracts + challenge deps
+yarn build                        # build contracts + challenge, then publish challenge artifact to dist/challenge
+yarn test                         # contracts test suite
 yarn test:contracts
 yarn test:challenge
 yarn test:challenge:local
@@ -53,12 +53,12 @@ yarn clean
 ```bash
 cd web
 yarn install
-yarn dev                 # local dev server
-yarn build               # production build
-yarn start               # run built app
-yarn lint                # Next.js lint rules
-yarn smoke:preview       # preview smoke flow (requires env)
-yarn smoke:prod          # production smoke flow (requires env)
+yarn dev                          # local dev server
+yarn build                        # production build
+yarn start                        # run built app
+yarn lint                         # Next.js lint rules
+yarn smoke:preview                # preview smoke flow (requires env)
+yarn smoke:prod                   # production smoke flow (requires env)
 ```
 
 ### Contracts (`contracts/`)
@@ -79,7 +79,7 @@ yarn deploy:mainnet
 cd challenge
 yarn install
 yarn build
-yarn test                # automated local integration (hardhat + kubo)
+yarn test                         # automated local integration (hardhat + kubo)
 yarn test:manual
 yarn clean
 ```

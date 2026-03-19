@@ -27,12 +27,13 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
+      - run: corepack enable
 
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@latest # OIDC trusted publishing requires npm 11.5.1+
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Build
         run: yarn build

@@ -23,15 +23,15 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "yarn build && ./scripts/test-with-node.sh",
-    "test:manual": "yarn build && cd ../contracts && npx hardhat test ../challenge/test/mintpass-integration.test.js --network localhost",
+    "test": "corepack yarn build && ./scripts/test-with-node.sh",
+    "test:manual": "corepack yarn build && cd ../contracts && corepack yarn hardhat test ../challenge/test/mintpass-integration.test.js --network localhost",
     "clean": "rm -rf dist/",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release-notes": "conventional-changelog -p angular -r 1 > RELEASE_NOTES.md"
   },
   "dependencies": {
-    "@plebbit/plebbit-logger": "https://github.com/plebbit/plebbit-logger.git",
     "@keyv/sqlite": "^4.0.5",
+    "@plebbit/plebbit-logger": "https://github.com/plebbit/plebbit-logger.git",
     "env-paths": "^3.0.0",
     "keyv": "5.5.0",
     "multiformats": "^13.1.0",
@@ -42,7 +42,7 @@
     "@plebbit/plebbit-js": ">=0.0.0"
   },
   "devDependencies": {
-    "@plebbit/plebbit-js": "https://github.com/plebbit/plebbit-js.git#a21d896bd55c76070758dae65dc0693d1c3726db",
+    "@plebbit/plebbit-js": "https://codeload.github.com/plebbit/plebbit-js/tar.gz/a21d896bd55c76070758dae65dc0693d1c3726db",
     "@types/chai": "^4.2.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.7.8",
@@ -68,5 +68,6 @@
     "type": "git",
     "url": "https://github.com/bitsocialnet/mintpass",
     "directory": "challenge"
-  }
+  },
+  "packageManager": "yarn@4.13.0"
 }

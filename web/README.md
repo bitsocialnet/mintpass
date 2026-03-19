@@ -82,11 +82,12 @@ Serverless website and API that power the SMS verification flow and NFT minting 
 
 ### Local Development
 
-Requires [Portless](https://github.com/vercel-labs/portless), installed with project dependencies via `yarn install`
+Requires [Portless](https://github.com/vercel-labs/portless), installed with project dependencies via `corepack yarn install`
 
 ```bash
-yarn install
-yarn dev         # http://mintpass.localhost:1355
+corepack enable
+corepack yarn install
+corepack yarn dev         # http://mintpass.localhost:1355
 ```
 
 The dev server runs at http://mintpass.localhost:1355 via [Portless](https://port1355.dev/), which gives each Bitsocial project a stable, named URL instead of a random port. To bypass Portless: `PORTLESS=0 yarn dev`
@@ -142,7 +143,7 @@ Notes:
   - `PREVIEW_BASE_URL`, `PHONE`, `ADDR`
   - `BYPASS_TOKEN` (only if protection is enabled)
   - `SMOKE_TEST_TOKEN` (optional; returns `debugCode` during send)
-- Run `yarn install` then `yarn smoke:preview`.
+- Run `corepack yarn install` then `corepack yarn smoke:preview`.
 - Expected: send → verify → eligibility=true → mint ok (stubbed unless on-chain envs are set).
 
 ### Environment Variables
