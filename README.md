@@ -53,11 +53,13 @@ mintpass/
 
 ## Getting started
 
-Run `corepack enable` once per machine first so `yarn` resolves to the pinned Yarn 4 release in each package.
+1. Run `nvm install && nvm use`
+2. Run `corepack enable` once per machine so `yarn` resolves to the pinned Yarn 4 release
+3. Use plain `yarn install`, `yarn build`, and `yarn test`
 
-- Contracts: `cd contracts && corepack yarn install && corepack yarn test`
-- Challenge: `cd challenge && corepack yarn install && corepack yarn test`
-- Web: `cd web && corepack yarn install && corepack yarn dev` then open `http://mintpass.localhost:1355/request`
+- Contracts: `cd contracts && yarn install && yarn test`
+- Challenge: `cd challenge && yarn install && yarn test`
+- Web: `cd web && yarn install && yarn dev` then open `http://mintpass.localhost:1355/request`
 
 ## Where MintPass is useful
 

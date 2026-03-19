@@ -20,8 +20,8 @@ git clone https://github.com/your-username/mintpass.git
 
 # Build the challenge
 cd mintpass
-corepack yarn install:all
-corepack yarn build:challenge
+yarn install
+yarn build:challenge
 ```
 
 ## Usage
@@ -96,8 +96,8 @@ The challenge tracks when NFTs are used by different plebbit accounts and enforc
 
 ```bash
 cd challenge
-corepack yarn install
-corepack yarn build
+yarn install
+yarn build
 ```
 
 ### Testing
@@ -107,7 +107,7 @@ The challenge includes comprehensive automated testing that covers both the chal
 #### Quick Start
 ```bash
 cd challenge
-corepack yarn test
+yarn test
 ```
 
 This command automatically:
@@ -121,10 +121,10 @@ For situations where you need to manage the test infrastructure manually:
 
 ```bash
 # Terminal 1: Start the Hardhat node
-cd contracts && corepack yarn hardhat node
+cd contracts && yarn hardhat node
 
 # Terminal 2: Run tests against the running node
-cd challenge && corepack yarn test:manual
+cd challenge && yarn test:manual
 ```
 
 #### Test Coverage
