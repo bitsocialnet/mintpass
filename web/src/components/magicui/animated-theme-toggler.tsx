@@ -1,7 +1,7 @@
 "use client";
 
 import { Moon, SunDim } from "lucide-react";
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
 import { flushSync } from "react-dom";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -13,12 +13,7 @@ type props = {
 export const AnimatedThemeToggler = ({ className }: props) => {
   const { setTheme, resolvedTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  // Wait for hydration to complete before showing theme-specific content
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = resolvedTheme !== undefined;
   
   const changeTheme = async () => {
     if (!buttonRef.current) return;
