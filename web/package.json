@@ -54,7 +54,7 @@
     "postcss": "^8.5.6",
     "react-doctor": "0.0.28",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5"
+    "typescript": "^6.0.2"
   },
   "packageManager": "yarn@4.13.0",
   "resolutions": {

@@ -52,7 +52,7 @@
     "hardhat": "^2.28.6",
     "kubo": "0.36.0",
     "tempy": "^3.1.0",
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.2"
   },
   "keywords": [
     "bitsocial",
