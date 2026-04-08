@@ -30,7 +30,7 @@ jobs:
       - run: corepack enable
 
       - name: Upgrade npm for trusted publishing
-        run: npm install -g npm@11
+        run: npm install -g npm@10.9.8 && npm install -g npm@11
 
       - name: Install dependencies
         run: yarn install --immutable
