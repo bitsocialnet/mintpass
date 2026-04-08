@@ -8,8 +8,8 @@ const __dirname = path.dirname(__filename);
 const { expect } = chai;
 const { ethers, network } = hardhat;
 
-// Function to generate ETH wallet from plebbit private key (matching challenge expected format)
-const getEthWalletFromPlebbitPrivateKey = async (privateKeyBase64, authorAddress, authorPublicKey) => {
+// Function to generate ETH wallet from PKC private key (matching challenge expected format)
+const getEthWalletFromPrivateKey = async (privateKeyBase64, authorAddress, authorPublicKey) => {
   if (privateKeyBase64 === 'private key') return;
 
   const privateKeyBytes = Buffer.from(privateKeyBase64, 'base64');
@@ -22,9 +22,9 @@ const getEthWalletFromPlebbitPrivateKey = async (privateKeyBase64, authorAddress
   const timestamp = Math.floor(Date.now() / 1000);
   
   // Use the exact message format expected by the challenge
-  // Sign binding of the ETH address (not the plebbit author address)
+  // Sign binding of the ETH address (not the PKC author address)
   const messageToSign = JSON.stringify({
-    domainSeparator: "plebbit-author-wallet",
+    domainSeparator: "bitsocial-author-wallet",
     authorAddress: wallet.address,
     timestamp: timestamp
   });
@@ -82,7 +82,7 @@ const waitForCondition = (obj, condition, timeout = 30000) => {
 };
 
 describe("MintPass Challenge Integration Test", function () {
-  let mintpass, admin, minter, plebbit, plebbitForPublishing, chainProviderUrl, ipfsProcess;
+  let mintpass, admin, minter, pkc, pkcForPublishing, chainProviderUrl, ipfsProcess;
   
   const NAME = "MintPassV1";
   const SYMBOL = "MINT1";
@@ -113,42 +113,42 @@ describe("MintPass Challenge Integration Test", function () {
 
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    console.log("🌐 Setting up Plebbit instance for local testing...");
-    const { default: Plebbit } = await import('@plebbit/plebbit-js');
-    
-    // Configure plebbit for local testing - no default chain providers to avoid conflicts
-    const plebbitOptions = {
+    console.log("🌐 Setting up PKC instance for local testing...");
+    const { default: PKC } = await import('@pkcprotocol/pkc-js');
+
+    // Configure PKC for local testing - no default chain providers to avoid conflicts
+    const pkcOptions = {
       httpRoutersOptions: [],
-      kuboRpcClientsOptions: ['http://127.0.0.1:5001/api/v0'], 
+      kuboRpcClientsOptions: ['http://127.0.0.1:5001/api/v0'],
       updateInterval: 1000
       // Custom RPC configuration is handled in challenge settings instead
     };
-    
-    plebbit = await Plebbit(plebbitOptions);
-    
-    // Create second plebbit instance for publishing (workaround for instance conflicts)
-    plebbitForPublishing = await Plebbit(plebbitOptions);
-    console.log("✅ Plebbit instances created for local testing");
+
+    pkc = await PKC(pkcOptions);
+
+    // Create second PKC instance for publishing (workaround for instance conflicts)
+    pkcForPublishing = await PKC(pkcOptions);
+    console.log("✅ PKC instances created for local testing");
   });
 
   after(async function () {
     console.log("\n🧹 Cleaning up test environment...");
     
-    if (plebbit) {
+    if (pkc) {
       try {
-        await plebbit.destroy();
-        console.log("✅ Plebbit destroyed");
+        await pkc.destroy();
+        console.log("✅ PKC destroyed");
       } catch (error) {
-        console.log("⚠️ Error destroying plebbit:", error.message);
+        console.log("⚠️ Error destroying pkc:", error.message);
       }
     }
 
-    if (plebbitForPublishing) {
+    if (pkcForPublishing) {
       try {
-        await plebbitForPublishing.destroy();
-        console.log("✅ Plebbit for publishing destroyed");
+        await pkcForPublishing.destroy();
+        console.log("✅ PKC for publishing destroyed");
       } catch (error) {
-        console.log("⚠️ Error destroying plebbitForPublishing:", error.message);
+        console.log("⚠️ Error destroying pkcForPublishing:", error.message);
       }
     }
 
@@ -166,9 +166,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 1: Publishing should fail when author has no NFT");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Verify user doesn't have NFT
@@ -176,28 +176,28 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.false;
     console.log("✅ Confirmed author doesn't own MintPass NFT");
 
-    // Create subplebbit using the original plebbit instance
-    const subplebbit = await plebbit.createSubplebbit({
+    // Create community using the original PKC instance
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge integration with local publishing'
     });
     
     // Configure challenge with custom RPC URL and chainId (no default chain providers)
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    // Start subplebbit and wait for it to be ready (critical for proper test execution)
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    // Start community and wait for it to be ready (critical for proper test execution)
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      // Create comment using different plebbit instance (workaround for instance conflicts)
-      const comment = await plebbitForPublishing.createComment({
+      // Create comment using different PKC instance (workaround for instance conflicts)
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment without NFT',
         content: 'This comment should fail the mintpass challenge',
         // Set wallet information during creation
@@ -241,9 +241,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 1 PASSED: challengeSuccess = false (correctly failed without NFT)");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -251,9 +251,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 2: Publishing should succeed when author has NFT");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Mint NFT to the author wallet
@@ -263,28 +263,28 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed author owns MintPass NFT");
 
-    // Create subplebbit using the original plebbit instance
-    const subplebbit = await plebbit.createSubplebbit({
+    // Create community using the original PKC instance
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge integration with local publishing'
     });
     
     // Configure challenge with custom RPC URL and chainId for local testing
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    // Start subplebbit and wait for it to be ready (critical for proper test execution)
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    // Start community and wait for it to be ready (critical for proper test execution)
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      // Create comment using different plebbit instance (workaround for instance conflicts)
-      const comment = await plebbitForPublishing.createComment({
+      // Create comment using different PKC instance (workaround for instance conflicts)
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with NFT',
         content: 'This comment should pass the mintpass challenge',
         // Set wallet information during creation
@@ -327,9 +327,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 2 PASSED: challengeSuccess = true (correctly verified NFT ownership)");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -337,8 +337,8 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 3: Author with eth wallet preferred");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
     
     // Create a different wallet for 'eth' by using a different timestamp and address
     const [, , user1] = await ethers.getSigners();
@@ -353,7 +353,7 @@ describe("MintPass Challenge Integration Test", function () {
       }
     };
     
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 ETH address without NFT: ${ethWallet2.address}`);
     console.log(`💳 ETH address with NFT: ${ethWallet.address}`);
     
@@ -363,24 +363,24 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed ETH wallet owns MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with multiple wallet types'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with multiple wallet types',
         content: 'This comment should pass with multiple wallet types',
         author: { 
@@ -416,9 +416,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 3 PASSED: Challenge used ETH wallet and succeeded");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -426,27 +426,27 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 4: Author with no wallet defined");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with no wallet'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with no wallet',
         content: 'This comment should fail due to no wallet'
         // No author.wallets defined
@@ -481,9 +481,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 4 PASSED: Challenge correctly failed with no wallet");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -491,9 +491,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 5: Author with ENS address");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Mint NFT to the author wallet
@@ -502,19 +502,19 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed author owns MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with ENS address'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // Create wallet with ENS-like address (for testing purposes)
@@ -524,9 +524,9 @@ describe("MintPass Challenge Integration Test", function () {
         signature: ethWallet.signature
       };
 
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with ENS address',
         content: 'This comment should handle ENS addresses',
         author: { 
@@ -565,9 +565,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 5 PASSED: ENS handling works as expected");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -575,27 +575,27 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 6: Invalid wallet signature");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Mint NFT to the author wallet
     await mintpass.connect(minter).mint(ethWallet.address, SMS_TOKEN_TYPE);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with invalid signature'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // Create wallet with completely corrupted signature
@@ -607,9 +607,9 @@ describe("MintPass Challenge Integration Test", function () {
         }
       };
 
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with invalid signature',
         content: 'This comment should fail due to invalid signature',
         author: { 
@@ -648,9 +648,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 6 PASSED: Invalid signature correctly rejected");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -658,8 +658,8 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 7: Expired signature timestamp");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
 
     // Create wallet with very old timestamp (1 hour ago)
     const oldTimestamp = Math.floor(Date.now() / 1000) - 3600;
@@ -668,7 +668,7 @@ describe("MintPass Challenge Integration Test", function () {
     const wallet = new ethers.Wallet(privateKeyHex);
     
     const messageToSign = JSON.stringify({
-      domainSeparator: "plebbit-author-wallet",
+      domainSeparator: "bitsocial-author-wallet",
       authorAddress: wallet.address,
       timestamp: oldTimestamp
     });
@@ -688,24 +688,24 @@ describe("MintPass Challenge Integration Test", function () {
     // Mint NFT to the author wallet
     await mintpass.connect(minter).mint(wallet.address, SMS_TOKEN_TYPE);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with expired timestamp'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with expired timestamp',
         content: 'This comment should fail due to expired timestamp',
         author: { 
@@ -746,9 +746,9 @@ describe("MintPass Challenge Integration Test", function () {
       expect(challengeSuccessValue).to.be.true;
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -756,27 +756,27 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 8: Wrong signing format");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Mint NFT to the author wallet
     await mintpass.connect(minter).mint(ethWallet.address, SMS_TOKEN_TYPE);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with wrong signing format'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // Create a signature with the wrong message format (missing authorAddress)
@@ -786,7 +786,7 @@ describe("MintPass Challenge Integration Test", function () {
       
       // Sign the wrong message format (missing authorAddress field that challenge expects)
       const wrongMessage = JSON.stringify({
-        domainSeparator: "plebbit-author-wallet",
+        domainSeparator: "bitsocial-author-wallet",
         timestamp: ethWallet.timestamp
         // Missing authorAddress field
       });
@@ -801,9 +801,9 @@ describe("MintPass Challenge Integration Test", function () {
         }
       };
 
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with wrong signing format',
         content: 'This comment should fail due to wrong signing format',
         author: { 
@@ -842,9 +842,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 8 PASSED: Wrong signing format correctly rejected");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -852,9 +852,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 9: Different token types (email type)");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     const EMAIL_TOKEN_TYPE = 1;
@@ -865,27 +865,27 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasEmailNFT).to.be.true;
     console.log("✅ Confirmed author owns Email MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with email token type'
     });
     
     // Configure challenge to require EMAIL token type
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const challengeSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
     challengeSettings.options.requiredTokenType = EMAIL_TOKEN_TYPE.toString();
     settings.challenges = [challengeSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with EMAIL token type challenge");
+    await community.edit({ settings });
+    console.log("✅ Community configured with EMAIL token type challenge");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with email token type',
         content: 'This comment should pass with email NFT verification',
         author: { 
@@ -921,9 +921,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 9 PASSED: Email token type verification succeeded");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -931,9 +931,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 10: Wrong token type ownership");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     const EMAIL_TOKEN_TYPE = 1;
@@ -946,25 +946,25 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasSMSNFT).to.be.false;
     console.log("✅ Confirmed author owns Email NFT but not SMS NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with wrong token type'
     });
     
     // Configure challenge to require SMS but user has EMAIL
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with SMS token type challenge");
+    await community.edit({ settings });
+    console.log("✅ Community configured with SMS token type challenge");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with wrong token type',
         content: 'This comment should fail due to wrong token type',
         author: { 
@@ -1003,9 +1003,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 10 PASSED: Wrong token type correctly rejected");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1013,9 +1013,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 11: Multiple NFT ownership");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     const EMAIL_TOKEN_TYPE = 1;
@@ -1030,25 +1030,25 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasEmailNFT).to.be.true;
     console.log("✅ Confirmed author owns both SMS and Email NFTs");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with multiple NFT ownership'
     });
     
     // Configure challenge to require SMS (user has both)
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with SMS token type challenge");
+    await community.edit({ settings });
+    console.log("✅ Community configured with SMS token type challenge");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with multiple NFT ownership',
         content: 'This comment should pass with multiple NFT types',
         author: { 
@@ -1084,9 +1084,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 11 PASSED: Multiple NFT ownership verification succeeded");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1094,31 +1094,31 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 12: Invalid contract address");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with invalid contract address'
     });
     
     // Configure challenge with invalid contract address
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const invalidAddress = '0x0000000000000000000000000000000000000000';
     settings.challenges = [createChallengeSettings(invalidAddress, chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with invalid contract address");
+    await community.edit({ settings });
+    console.log("✅ Community configured with invalid contract address");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with invalid contract',
         content: 'This comment should fail due to invalid contract',
         author: { 
@@ -1157,9 +1157,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 12 PASSED: Invalid contract address correctly handled");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1167,34 +1167,34 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 13: Wrong chain configuration");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
 
     // Mint NFT to the author wallet on correct chain
     await mintpass.connect(minter).mint(ethWallet.address, SMS_TOKEN_TYPE);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with wrong chain config'
     });
     
     // Configure challenge with invalid RPC URL that will fail to connect
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const wrongChainSettings = createChallengeSettings(await mintpass.getAddress(), 'http://invalid-rpc-url:9999', 31337);
     settings.challenges = [wrongChainSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with wrong chain configuration");
+    await community.edit({ settings });
+    console.log("✅ Community configured with wrong chain configuration");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with wrong chain config',
         content: 'This comment should fail due to wrong chain config',
         author: { 
@@ -1237,9 +1237,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 13 PASSED: Wrong chain configuration correctly handled");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1247,9 +1247,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 14: Custom error messages");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Don't mint NFT so challenge will fail
@@ -1257,27 +1257,27 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.false;
     console.log("✅ Confirmed author doesn't own MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with custom error message'
     });
     
     // Configure challenge with custom error message
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const customChallengeSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
     customChallengeSettings.options.error = 'Custom error: Please get your MintPass at https://example.com/get-mintpass';
     settings.challenges = [customChallengeSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with custom error message");
+    await community.edit({ settings });
+    console.log("✅ Community configured with custom error message");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment for custom error',
         content: 'This comment should show custom error message',
         author: { 
@@ -1316,9 +1316,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 14 PASSED: Custom error message correctly displayed");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1326,9 +1326,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 15: Very large token ID");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Use maximum valid uint16 value (65535) instead of 999999
@@ -1340,27 +1340,27 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasLargeNFT).to.be.true;
     console.log("✅ Confirmed author owns large token ID NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with large token ID'
     });
     
     // Configure challenge to require large token type
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const challengeSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
     challengeSettings.options.requiredTokenType = LARGE_TOKEN_TYPE.toString();
     settings.challenges = [challengeSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with large token type challenge");
+    await community.edit({ settings });
+    console.log("✅ Community configured with large token type challenge");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with large token ID',
         content: 'This comment should pass with large token ID verification',
         author: { 
@@ -1396,9 +1396,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 15 PASSED: Large token ID verification succeeded");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1406,19 +1406,19 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 16: Challenge options validation");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
 
-    // Create subplebbit with missing contractAddress (required field)
-    const subplebbit = await plebbit.createSubplebbit({
+    // Create community with missing contractAddress (required field)
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with invalid options'
     });
     
     // Configure challenge with missing required options (contractAddress is missing)
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const invalidChallengeSettings = {
       path: path.resolve(__dirname, '../dist/mintpass.js'),
       options: {
@@ -1431,16 +1431,16 @@ describe("MintPass Challenge Integration Test", function () {
     settings.challenges = [invalidChallengeSettings];
     
     try {
-      await subplebbit.edit({ settings });
-      console.log("✅ Subplebbit configured with invalid challenge options");
+      await community.edit({ settings });
+      console.log("✅ Community configured with invalid challenge options");
       
-      await subplebbit.start();
-      await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-      console.log("✅ Subplebbit started and ready");
+      await community.start();
+      await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+      console.log("✅ Community started and ready");
 
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with invalid options',
         content: 'This comment should fail due to invalid challenge options',
         author: { 
@@ -1497,11 +1497,11 @@ describe("MintPass Challenge Integration Test", function () {
       }
     } finally {
       try {
-        await subplebbit.stop();
-        await subplebbit.delete();
-        console.log("🧹 Subplebbit cleaned up");
+        await community.stop();
+        await community.delete();
+        console.log("🧹 Community cleaned up");
       } catch (cleanupError) {
-        console.log("🧹 Subplebbit cleanup completed (may have already been cleaned up)");
+        console.log("🧹 Community cleanup completed (may have already been cleaned up)");
       }
     }
   });
@@ -1510,9 +1510,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(180000); // Extended timeout for multiple attempts
     console.log("\n🧪 Test 17: Challenge retry scenarios");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Mint NFT to the author wallet
@@ -1521,26 +1521,26 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed author owns MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge retry scenarios'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // First attempt
       console.log("📤 First publishing attempt...");
-      const comment1 = await plebbitForPublishing.createComment({
+      const comment1 = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment retry attempt 1',
         content: 'First attempt at publishing',
         author: { 
@@ -1574,9 +1574,9 @@ describe("MintPass Challenge Integration Test", function () {
 
       // Second attempt (should also succeed)
       console.log("📤 Second publishing attempt...");
-      const comment2 = await plebbitForPublishing.createComment({
+      const comment2 = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment retry attempt 2',
         content: 'Second attempt at publishing',
         author: { 
@@ -1606,9 +1606,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 17 PASSED: Multiple challenge attempts succeeded");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1616,9 +1616,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 18: NFT in cooldown period");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Mint NFT to the author wallet
@@ -1627,30 +1627,30 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed author owns MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with cooldown period'
     });
     
     // Configure challenge with very short cooldown for testing (1 second)
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const cooldownSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
     cooldownSettings.options.transferCooldownSeconds = '1';
     // Disable binding here to specifically test cooldown behavior
     cooldownSettings.options.bindToFirstAuthor = 'false';
     settings.challenges = [cooldownSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with cooldown challenge");
+    await community.edit({ settings });
+    console.log("✅ Community configured with cooldown challenge");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // First publish to establish cooldown
-      const comment1 = await plebbitForPublishing.createComment({
+      const comment1 = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'First comment to establish cooldown',
         content: 'This establishes the cooldown period',
         author: { 
@@ -1680,9 +1680,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ First comment succeeded, cooldown established");
 
       // Immediately try second publish (should be in cooldown or succeed since same author)
-      const comment2 = await plebbitForPublishing.createComment({
+      const comment2 = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Second comment during cooldown',
         content: 'This should succeed since same author uses same NFT',
         author: { 
@@ -1716,9 +1716,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 18 PASSED: Same author can reuse NFT immediately");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1726,9 +1726,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 19: NFT cooldown expired");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Mint NFT to the author wallet
@@ -1737,28 +1737,28 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed author owns MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with expired cooldown'
     });
     
     // Configure challenge with very short cooldown for testing (1 second)
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const cooldownSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
     cooldownSettings.options.transferCooldownSeconds = '1';
     settings.challenges = [cooldownSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with short cooldown challenge");
+    await community.edit({ settings });
+    console.log("✅ Community configured with short cooldown challenge");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // First publish to establish cooldown
-      const comment1 = await plebbitForPublishing.createComment({
+      const comment1 = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'First comment to establish cooldown',
         content: 'This establishes the cooldown period',
         author: { 
@@ -1792,9 +1792,9 @@ describe("MintPass Challenge Integration Test", function () {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Try second publish after cooldown expired
-      const comment2 = await plebbitForPublishing.createComment({
+      const comment2 = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Second comment after cooldown',
         content: 'This should succeed after cooldown expired',
         author: { 
@@ -1825,9 +1825,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 19 PASSED: Comment succeeded after cooldown expired");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1836,10 +1836,10 @@ describe("MintPass Challenge Integration Test", function () {
     console.log("\n🧪 Test 20: Multiple accounts using same NFT");
 
     // Create two different author signers
-    const authorSigner1 = await plebbitForPublishing.createSigner();
-    const authorSigner2 = await plebbitForPublishing.createSigner();
+    const authorSigner1 = await pkcForPublishing.createSigner();
+    const authorSigner2 = await pkcForPublishing.createSigner();
     
-    const ethWallet1 = await getEthWalletFromPlebbitPrivateKey(authorSigner1.privateKey, authorSigner1.address, authorSigner1.publicKey);
+    const ethWallet1 = await getEthWalletFromPrivateKey(authorSigner1.privateKey, authorSigner1.address, authorSigner1.publicKey);
     
     // Create proper signature for second author using the shared wallet address
     const privateKeyBytes1 = Buffer.from(authorSigner1.privateKey, 'base64');
@@ -1849,7 +1849,7 @@ describe("MintPass Challenge Integration Test", function () {
     // Create proper signature for the second author with the shared wallet
     const sharedTimestamp = Math.floor(Date.now() / 1000);
     const messageToSign2 = JSON.stringify({
-      domainSeparator: "plebbit-author-wallet",
+      domainSeparator: "bitsocial-author-wallet",
       authorAddress: wallet1.address,  // Sign the ETH address
       timestamp: sharedTimestamp
     });
@@ -1866,8 +1866,8 @@ describe("MintPass Challenge Integration Test", function () {
       }
     };
 
-    console.log(`👤 Author 1 plebbit address: ${authorSigner1.address}`);
-    console.log(`👤 Author 2 plebbit address: ${authorSigner2.address}`);
+    console.log(`👤 Author 1 PKC address: ${authorSigner1.address}`);
+    console.log(`👤 Author 2 PKC address: ${authorSigner2.address}`);
     console.log(`💳 Shared ETH address: ${ethWallet1.address}`);
     
     // Mint NFT to the shared wallet address
@@ -1876,27 +1876,27 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed shared wallet owns MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with multiple accounts sharing NFT'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const cooldownSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
     cooldownSettings.options.transferCooldownSeconds = '1';
     settings.challenges = [cooldownSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with cooldown challenge");
+    await community.edit({ settings });
+    console.log("✅ Community configured with cooldown challenge");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // First account publishes
-      const comment1 = await plebbitForPublishing.createComment({
+      const comment1 = await pkcForPublishing.createComment({
         signer: authorSigner1,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Comment from first account',
         content: 'First account using shared NFT',
         author: { 
@@ -1926,9 +1926,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ First account succeeded");
 
       // Second account tries to use same NFT immediately  
-      const comment2 = await plebbitForPublishing.createComment({
+      const comment2 = await pkcForPublishing.createComment({
         signer: authorSigner2,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Comment from second account',
         content: 'Second account trying to use same NFT',
         author: { 
@@ -1963,9 +1963,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 20 PASSED: Cooldown correctly prevents multiple accounts from using same NFT immediately");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -1973,31 +1973,31 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 21: Contract call failure");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with contract call failure'
     });
     
     // Configure challenge with invalid RPC URL to force failure
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     const failureSettings = createChallengeSettings(await mintpass.getAddress(), 'http://invalid-rpc-url:9999', 31337);
     settings.challenges = [failureSettings];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with invalid RPC URL");
+    await community.edit({ settings });
+    console.log("✅ Community configured with invalid RPC URL");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with RPC failure',
         content: 'This comment should fail due to RPC connection failure',
         author: { 
@@ -2040,9 +2040,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 21 PASSED: RPC failure correctly handled");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -2050,9 +2050,9 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 22: Batch minted NFTs");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
-    console.log(`👤 Author plebbit address: ${authorSigner.address}`);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
     console.log(`💳 Author ETH address: ${ethWallet.address}`);
     
     // Use V1 mintBatch with matching array lengths
@@ -2065,24 +2065,24 @@ describe("MintPass Challenge Integration Test", function () {
     expect(hasNFT).to.be.true;
     console.log("✅ Confirmed author owns MintPass NFT");
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with batch minted NFTs'
     });
     
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges");
     
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with batch minted NFT',
         content: 'This comment should pass with batch minted NFT',
         author: { 
@@ -2118,9 +2118,9 @@ describe("MintPass Challenge Integration Test", function () {
       console.log("✅ Test 22 PASSED: Batch minted NFT verification succeeded");
       
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -2128,12 +2128,12 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 23: bindToFirstAuthor blocks different author");
 
-    // Two different Plebbit authors
-    const authorA = await plebbitForPublishing.createSigner();
-    const authorB = await plebbitForPublishing.createSigner();
+    // Two different PKC authors
+    const authorA = await pkcForPublishing.createSigner();
+    const authorB = await pkcForPublishing.createSigner();
 
     // Wallet derived from authorA private key
-    const walletA = await getEthWalletFromPlebbitPrivateKey(authorA.privateKey, authorA.address, authorA.publicKey);
+    const walletA = await getEthWalletFromPrivateKey(authorA.privateKey, authorA.address, authorA.publicKey);
 
     // Mint NFT to walletA
     await mintpass.connect(minter).mint(walletA.address, SMS_TOKEN_TYPE);
@@ -2143,7 +2143,7 @@ describe("MintPass Challenge Integration Test", function () {
     const privateKeyHexA = '0x' + Buffer.from(privateKeyBytesA).toString('hex');
     const eoaA = new ethers.Wallet(privateKeyHexA);
     const messageToSignB = JSON.stringify({
-      domainSeparator: "plebbit-author-wallet",
+      domainSeparator: "bitsocial-author-wallet",
       authorAddress: walletA.address,
       timestamp: Math.floor(Date.now() / 1000)
     });
@@ -2159,8 +2159,8 @@ describe("MintPass Challenge Integration Test", function () {
       }
     };
 
-    // Create subplebbit and enforce binding (cooldown off to isolate binding behavior)
-    const sub = await plebbit.createSubplebbit({
+    // Create community and enforce binding (cooldown off to isolate binding behavior)
+    const sub = await pkc.createCommunity({
       title: 'MintPass Binding',
       description: 'Bind tokenId to first author'
     });
@@ -2175,9 +2175,9 @@ describe("MintPass Challenge Integration Test", function () {
 
     try {
     // First publish as authorA → should fail due to signature mismatch now; adjust expectation later
-      const comment1 = await plebbitForPublishing.createComment({
+      const comment1 = await pkcForPublishing.createComment({
         signer: authorA,
-        subplebbitAddress: sub.address,
+        communityAddress: sub.address,
         title: 'Bind first author',
         content: 'Should pass and bind',
         author: { wallets: { eth: walletA } }
@@ -2192,9 +2192,9 @@ describe("MintPass Challenge Integration Test", function () {
       expect(success1).to.be.true;
 
       // Second publish as authorB using same wallet → should fail due to binding
-      const comment2 = await plebbitForPublishing.createComment({
+      const comment2 = await pkcForPublishing.createComment({
         signer: authorB,
-        subplebbitAddress: sub.address,
+        communityAddress: sub.address,
         title: 'Second author reuse',
         content: 'Should fail due to binding',
         author: { wallets: { eth: walletForB } }
@@ -2220,28 +2220,28 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 24: Vote should succeed when author has NFT");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
 
     // Mint NFT to the author wallet
     await mintpass.connect(minter).mint(ethWallet.address, SMS_TOKEN_TYPE);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge with vote publication'
     });
 
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
+    await community.edit({ settings });
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
 
     try {
       // First publish a comment to vote on and capture its CID
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Post to vote on',
         content: 'Vote target',
         author: { wallets: { eth: ethWallet } }
@@ -2250,16 +2250,16 @@ describe("MintPass Challenge Integration Test", function () {
       let publishedCid = null;
       comment.on('challenge', () => comment.publishChallengeAnswers(['test']));
       comment.on('challengeverification', (cv) => {
-        // Prefer publication.cid, fallback to commentUpdate.cid as emitted by current plebbit-js
+        // Prefer publication.cid, fallback to commentUpdate.cid as emitted by current pkc-js
         publishedCid = cv?.publication?.cid || cv?.commentUpdate?.cid || cv?.comment?.cid || null;
       });
       await comment.publish();
       await waitForCondition({}, () => Boolean(publishedCid), 30000);
 
       // Now create a vote publication and expect success
-      const vote = await plebbitForPublishing.createVote({
+      const vote = await pkcForPublishing.createVote({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         commentCid: publishedCid,
         vote: 1,
         author: { wallets: { eth: ethWallet } }
@@ -2275,8 +2275,8 @@ describe("MintPass Challenge Integration Test", function () {
       expect(voteSuccess).to.be.true;
       console.log("✅ Test 24 PASSED: Vote succeeded with NFT");
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
+      await community.stop();
+      await community.delete();
     }
   });
 
@@ -2285,30 +2285,30 @@ describe("MintPass Challenge Integration Test", function () {
     console.log("\n🧪 Test 25: Vote should fail when author has no NFT");
 
     // Create a poster with NFT to publish a target comment
-    const posterSigner = await plebbitForPublishing.createSigner();
-    const posterWallet = await getEthWalletFromPlebbitPrivateKey(posterSigner.privateKey, posterSigner.address, posterSigner.publicKey);
+    const posterSigner = await pkcForPublishing.createSigner();
+    const posterWallet = await getEthWalletFromPrivateKey(posterSigner.privateKey, posterSigner.address, posterSigner.publicKey);
     await mintpass.connect(minter).mint(posterWallet.address, SMS_TOKEN_TYPE);
 
     // Create a voter without NFT
-    const voterSigner = await plebbitForPublishing.createSigner();
-    const voterWallet = await getEthWalletFromPlebbitPrivateKey(voterSigner.privateKey, voterSigner.address, voterSigner.publicKey);
+    const voterSigner = await pkcForPublishing.createSigner();
+    const voterWallet = await getEthWalletFromPrivateKey(voterSigner.privateKey, voterSigner.address, voterSigner.publicKey);
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing mintpass challenge vote fail path'
     });
 
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
+    await community.edit({ settings });
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
 
     try {
       // Publish the target comment as poster (has NFT)
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: posterSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Post to vote on - no NFT voter',
         content: 'Vote target',
         author: { wallets: { eth: posterWallet } }
@@ -2322,9 +2322,9 @@ describe("MintPass Challenge Integration Test", function () {
       await waitForCondition({}, () => Boolean(publishedCid), 30000);
 
       // Attempt a vote by voter without NFT → expect failure
-      const vote = await plebbitForPublishing.createVote({
+      const vote = await pkcForPublishing.createVote({
         signer: voterSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         commentCid: publishedCid,
         vote: 1,
         author: { wallets: { eth: voterWallet } }
@@ -2346,8 +2346,8 @@ describe("MintPass Challenge Integration Test", function () {
       expect(String(voteErrors['0'] || '')).to.include('You need a MintPass NFT');
       console.log("✅ Test 25 PASSED: Vote correctly failed without NFT");
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
+      await community.stop();
+      await community.delete();
     }
   });
   
@@ -2361,7 +2361,7 @@ describe("MintPass Challenge Integration Test", function () {
       address: '0x172bb210Ebf51882b63d59609A7BC5c70ce84311',
       timestamp: 1758422293,
       signature: {
-        signature: '0x0d2a091975bcaa4895eb532a74bdef7060db7980ec7bed47812a3e26d5138ea712b890151c117d5e28739b40303b186dc58483065e7390238bd9902e88dbd1071c',
+        signature: '0x0bf13e0ce9624b9f02a1b0c13227c5587e6e77e2e739bd38ba2f017e2aac06e1685e4aeb622a55dd5e7a3f360ae151acd511b1316dd833246c8f5b875cbcee361c',
         type: 'eip191',
         signedPropertyNames: ["domainSeparator","authorAddress","timestamp"]
       }
@@ -2370,33 +2370,33 @@ describe("MintPass Challenge Integration Test", function () {
     // Mint NFT to the provided wallet address so ownership check passes
     await mintpass.connect(minter).mint(wallet.address, SMS_TOKEN_TYPE);
 
-    // Create subplebbit and configure challenge with chainTicker base.
-    const subplebbit = await plebbit.createSubplebbit({
+    // Create community and configure challenge with chainTicker base.
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing valid signature vector with wallet fallback'
     });
 
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    console.log("✅ Subplebbit configured with challenges (chainTicker base)");
+    await community.edit({ settings });
+    console.log("✅ Community configured with challenges (chainTicker base)");
 
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
-    console.log("✅ Subplebbit started and ready");
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+    console.log("✅ Community started and ready");
 
     try {
       // Provide only eth wallet; challenge should fall back from base→eth
       // Use Esteban's provided ed25519 signer (so authorAddress matches the signed wallet message)
       const providedPrivateKeyBase64 = 'X/m5oYzKfBRRGgByOSIpgRRIf0WHNo7bSEAUuRUbQ3s';
-      const signer = await plebbitForPublishing.createSigner({ type: 'ed25519', privateKey: providedPrivateKeyBase64 });
+      const signer = await pkcForPublishing.createSigner({ type: 'ed25519', privateKey: providedPrivateKeyBase64 });
       // Sanity check: ensure signer uses the expected author address from the vector
       if (signer.address !== authorAddress) {
         console.log('⚠️ Provided signer address mismatch, got', signer.address, 'expected', authorAddress);
       }
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment with valid vector',
         content: 'This should pass with base→eth wallet fallback',
         author: {
@@ -2417,9 +2417,9 @@ describe("MintPass Challenge Integration Test", function () {
       expect(success).to.be.true;
       console.log("✅ Test 26 PASSED: Valid signature accepted and wallet fallback worked");
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
-      console.log("🧹 Subplebbit cleaned up");
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
     }
   });
 
@@ -2427,28 +2427,28 @@ describe("MintPass Challenge Integration Test", function () {
     this.timeout(120000);
     console.log("\n🧪 Test 27: Iframe flow re-check passes after mint with empty answer");
 
-    const authorSigner = await plebbitForPublishing.createSigner();
-    const ethWallet = await getEthWalletFromPlebbitPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
 
     // Ensure author does not initially own the NFT
     const hasInitial = await mintpass.ownsTokenType(ethWallet.address, SMS_TOKEN_TYPE);
     expect(hasInitial).to.be.false;
 
-    const subplebbit = await plebbit.createSubplebbit({
+    const community = await pkc.createCommunity({
       title: 'MintPass Test Community',
       description: 'Testing iframe challenge flow with re-check'
     });
 
-    const settings = { ...subplebbit.settings };
+    const settings = { ...community.settings };
     settings.challenges = [createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337)];
-    await subplebbit.edit({ settings });
-    await subplebbit.start();
-    await waitForCondition(subplebbit, (s) => typeof s.updatedAt === "number");
+    await community.edit({ settings });
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
 
     try {
-      const comment = await plebbitForPublishing.createComment({
+      const comment = await pkcForPublishing.createComment({
         signer: authorSigner,
-        subplebbitAddress: subplebbit.address,
+        communityAddress: community.address,
         title: 'Test comment iframe flow',
         content: 'Should pass after mint during challenge iframe flow',
         author: { wallets: { eth: ethWallet } }
@@ -2478,8 +2478,8 @@ describe("MintPass Challenge Integration Test", function () {
       expect(challengeSuccessValue).to.be.true;
       console.log("✅ Test 27 PASSED: Challenge passed after mint and empty answer re-check");
     } finally {
-      await subplebbit.stop();
-      await subplebbit.delete();
+      await community.stop();
+      await community.delete();
     }
   });
   

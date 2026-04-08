@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "NFT-based authentication system for Plebbit communities",
+  "description": "NFT-based authentication system for PKC communities",
   "author": "Plebbit Labs",
   "license": "MIT",
   "exports": {
@@ -37,14 +37,14 @@
   "keywords": [
     "nft",
     "authentication",
-    "plebbit",
+    "pkc",
     "decentralized",
     "base",
     "ethereum"
   ],
   "dependencies": {
     "@keyv/sqlite": "^4.0.5",
-    "@plebbit/plebbit-js": "https://codeload.github.com/plebbit/plebbit-js/tar.gz/a21d896bd55c76070758dae65dc0693d1c3726db",
+    "@pkcprotocol/pkc-js": "git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c",
     "env-paths": "^3.0.0",
     "keyv": "5.5.0",
     "viem": "2.45.0"

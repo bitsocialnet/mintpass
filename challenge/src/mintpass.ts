@@ -3,14 +3,14 @@ import type {
     ChallengeInput,
     ChallengeResultInput,
     GetChallengeArgsInput,
-    SubplebbitChallengeSetting
-} from "@plebbit/plebbit-js/dist/node/subplebbit/types.js";
+    CommunityChallengeSetting
+} from "@pkcprotocol/pkc-js/dist/node/challenges";
 import type {
-    PublicationWithSubplebbitAuthorFromDecryptedChallengeRequest,
-    DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor
-} from "@plebbit/plebbit-js/dist/node/pubsub-messages/types.js";
-import type { Plebbit } from "@plebbit/plebbit-js/dist/node/plebbit/plebbit.js";
-import Logger from "@plebbit/plebbit-logger";
+    PublicationWithCommunityAuthorFromDecryptedChallengeRequest,
+    DecryptedChallengeRequestMessageTypeWithCommunityAuthor
+} from "@pkcprotocol/pkc-js/dist/node/pubsub-messages/types";
+import type { PKC } from "@pkcprotocol/pkc-js/dist/node/pkc/pkc";
+import Logger from "@pkc/pkc-logger";
 
 const log = Logger("pkc-js:challenge:mintpass");
 
@@ -20,10 +20,10 @@ const log = Logger("pkc-js:challenge:mintpass");
  * and returns the first one found.
  */
 function derivePublicationFromChallengeRequest(
-    request: DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor
-): PublicationWithSubplebbitAuthorFromDecryptedChallengeRequest {
-    // Known publication field names from plebbit-js DecryptedChallengeRequestPublicationSchema
-    const publicationFields = ['comment', 'vote', 'commentEdit', 'commentModeration', 'subplebbitEdit'] as const;
+    request: DecryptedChallengeRequestMessageTypeWithCommunityAuthor
+): PublicationWithCommunityAuthorFromDecryptedChallengeRequest {
+    // Known publication field names from pkc-js DecryptedChallengeRequestPublicationSchema
+    const publicationFields = ['comment', 'vote', 'commentEdit', 'commentModeration', 'communityEdit'] as const;
     for (const field of publicationFields) {
         if ((request as any)[field]) {
             return (request as any)[field];
@@ -47,7 +47,7 @@ function isStringDomain(address: string): boolean {
     return address.includes('.') && !address.startsWith('0x');
 }
 
-function getPlebbitAddressFromPublicKey(publicKey: string): string {
+function getAddressFromPublicKey(publicKey: string): string {
     const protobufPublicKeyPrefix = new Uint8Array([8, 1, 18, 32]);
     const multihashIdentityCode = 0;
 
@@ -60,7 +60,7 @@ function getPlebbitAddressFromPublicKey(publicKey: string): string {
     return uint8ArrayToString(multihashBytes, "base58btc");
 }
 
-// Challenge option inputs for subplebbit configuration
+// Challenge option inputs for community configuration
 const optionInputs = <NonNullable<ChallengeFileInput["optionInputs"]>>[
     {
         option: "chainTicker",
@@ -189,7 +189,7 @@ function getStores() {
 /**
  * Get chain provider with safety checks and fallbacks
  */
-const _getChainProviderWithSafety = (plebbit: Plebbit, chainTicker: string, customRpcUrl?: string) => {
+const _getChainProviderWithSafety = (chainTicker: string, customRpcUrl?: string) => {
     // If custom RPC URL is provided (e.g., for testing), use it
     if (customRpcUrl) {
         return {
@@ -197,13 +197,8 @@ const _getChainProviderWithSafety = (plebbit: Plebbit, chainTicker: string, cust
             chainId: customRpcUrl.includes('127.0.0.1') || customRpcUrl.includes('localhost') ? 1337 : 1
         };
     }
-    
-    // If plebbit has chainProviders configured, use them
-    if (plebbit.chainProviders && plebbit.chainProviders[chainTicker]) {
-        return plebbit.chainProviders[chainTicker];
-    }
-    
-    // Fallback to default RPC URLs if no chainProviders configured
+
+    // Default RPC URLs per chain
     const defaultProviders: Record<string, any> = {
         eth: {
             urls: ["https://rpc.ankr.com/eth"],
@@ -226,7 +221,7 @@ const _getChainProviderWithSafety = (plebbit: Plebbit, chainTicker: string, cust
 
 /**
  * Create viem client for a specific chain and RPC URL
- * This replaces the private plebbit-js API to avoid dependency on internal APIs
+ * This replaces the private pkc-js API to avoid dependency on internal APIs
  */
 const createViemClientForChain = async (chainTicker: string, rpcUrl: string) => {
     const { createPublicClient, http } = await import('viem');
@@ -262,13 +257,12 @@ const createViemClientForChain = async (chainTicker: string, rpcUrl: string) => 
  * Check if author has required MintPass NFT and handle transfer cooldown
  */
 const verifyAuthorMintPass = async (props: {
-    publication: PublicationWithSubplebbitAuthorFromDecryptedChallengeRequest;
+    publication: PublicationWithCommunityAuthorFromDecryptedChallengeRequest;
     chainTicker: string;
     contractAddress: string;
     requiredTokenType: number;
     transferCooldownSeconds: number;
     error: string;
-    plebbit: Plebbit;
     rpcUrl?: string;
     bindToFirstAuthor: boolean;
 }): Promise<string | undefined> => {
@@ -284,7 +278,7 @@ const verifyAuthorMintPass = async (props: {
     // Create client early, we may need it for ENS resolution
     const viemClient = await createViemClientForChain(
         props.chainTicker,
-        _getChainProviderWithSafety(props.plebbit, props.chainTicker, props.rpcUrl).urls[0]
+        _getChainProviderWithSafety(props.chainTicker, props.rpcUrl).urls[0]
     );
 
     // Resolve ENS wallet address if provided
@@ -306,7 +300,7 @@ const verifyAuthorMintPass = async (props: {
 
     // Verify the wallet signature against the ETH address and message containing that address
     const messageToBeSigned: any = {};
-    messageToBeSigned["domainSeparator"] = "plebbit-author-wallet";
+    messageToBeSigned["domainSeparator"] = "bitsocial-author-wallet";
     messageToBeSigned["authorAddress"] = addressToVerify;
     messageToBeSigned["timestamp"] = authorWallet.timestamp;
 
@@ -326,10 +320,10 @@ const verifyAuthorMintPass = async (props: {
         valid = false;
     }
 
-    // Fallback: some clients may have signed with the Plebbit author identity
+    // Fallback: some clients may have signed with the PKC author identity
     if (!valid) {
         const altMessage: any = {
-            domainSeparator: "plebbit-author-wallet",
+            domainSeparator: "bitsocial-author-wallet",
             authorAddress: props.publication.author.address,
             timestamp: authorWallet.timestamp
         };
@@ -361,20 +355,19 @@ const verifyAuthorMintPass = async (props: {
     }
 
     // Check MintPass NFT ownership
-    const authorIdentity = getPlebbitAddressFromPublicKey(props.publication.signature.publicKey);
+    const authorIdentity = getAddressFromPublicKey(props.publication.signature.publicKey);
     const mintPassValidationFailure = await validateMintPassOwnership({
         authorWalletAddress: addressToVerify,
         contractAddress: props.contractAddress,
         chainTicker: props.chainTicker,
         requiredTokenType: props.requiredTokenType,
         transferCooldownSeconds: props.transferCooldownSeconds,
-        // Use Plebbit author identity for cooldown/binding semantics (not ENS or wallet address)
+        // Use PKC author identity for cooldown/binding semantics (not ENS or wallet address)
         authorAddress: authorIdentity,
         error: props.error,
-        plebbit: props.plebbit,
         rpcUrl: props.rpcUrl,
         bindToFirstAuthor: props.bindToFirstAuthor,
-        subplebbitAddress: (<any>props.publication)?.subplebbitAddress
+        communityAddress: (<any>props.publication)?.communityAddress
     });
 
     return mintPassValidationFailure;
@@ -391,10 +384,9 @@ const validateMintPassOwnership = async (props: {
     transferCooldownSeconds: number;
     authorAddress: string;
     error: string;
-    plebbit: Plebbit;
     rpcUrl?: string;
     bindToFirstAuthor: boolean;
-    subplebbitAddress?: string;
+    communityAddress?: string;
 }): Promise<string | undefined> => {
 
 
@@ -403,7 +395,7 @@ const validateMintPassOwnership = async (props: {
         // Create viem client for the specified chain
         const viemClient = await createViemClientForChain(
             props.chainTicker,
-            _getChainProviderWithSafety(props.plebbit, props.chainTicker, props.rpcUrl).urls[0]
+            _getChainProviderWithSafety(props.chainTicker, props.rpcUrl).urls[0]
         );
 
         // Check if user owns the required token type (optionally bound to author)
@@ -457,9 +449,9 @@ const validateMintPassOwnership = async (props: {
         for (const token of requiredTokens) {
             const tokenCacheKey = `${props.contractAddress}_${token.tokenId.toString()}`;
             const lastUsageRecord = <{authorAddress: string; timestamp: number} | undefined>await transferCooldownStore.get(tokenCacheKey);
-            // Per-sub binding key (bind to first author that uses this tokenId in this sub)
-            const subKeyPrefix = props.subplebbitAddress ? `${props.subplebbitAddress}_` : '';
-            const bindingKey = `${subKeyPrefix}${tokenCacheKey}_binding`;
+            // Per-community binding key (bind to first author that uses this tokenId in this community)
+            const communityKeyPrefix = props.communityAddress ? `${props.communityAddress}_` : '';
+            const bindingKey = `${communityKeyPrefix}${tokenCacheKey}_binding`;
             const boundAuthor = <string | undefined>await bindingsStore.get(bindingKey);
             
             // If token was never used, or was used by the same author, it's valid
@@ -518,7 +510,7 @@ const validateMintPassOwnership = async (props: {
 /**
  * Get the wallet address to use for author identification
  */
-const getAuthorWalletAddress = (publication: PublicationWithSubplebbitAuthorFromDecryptedChallengeRequest): string => {
+const getAuthorWalletAddress = (publication: PublicationWithCommunityAuthorFromDecryptedChallengeRequest): string => {
     const wallets: any = publication.author.wallets || {};
     const authorWallet: any = wallets["eth"];
     if (typeof authorWallet?.address === "string") {
@@ -533,7 +525,7 @@ const getAuthorWalletAddress = (publication: PublicationWithSubplebbitAuthorFrom
 const getChallenge = async ({
     challengeSettings,
     challengeRequestMessage,
-    subplebbit
+    community
 }: GetChallengeArgsInput): Promise<ChallengeInput | ChallengeResultInput> => {
 
     const {
@@ -574,7 +566,6 @@ const getChallenge = async ({
     const authorWalletAddress = getAuthorWalletAddress(publication);
     
     const sharedProps = {
-        plebbit: subplebbit._plebbit,
         publication,
         chainTicker,
         contractAddress: effectiveContractAddress,
@@ -617,7 +608,7 @@ const getChallenge = async ({
                 } as ChallengeResultInput;
             },
             type
-        } as unknown as ChallengeResultInput; // Plebbit accepts either Challenge or ChallengeResult
+        } as unknown as ChallengeResultInput; // PKC accepts either Challenge or ChallengeResult
     }
 
     const errorString =
@@ -634,7 +625,7 @@ const getChallenge = async ({
 /**
  * Challenge file factory function
  */
-function ChallengeFileFactory({ challengeSettings }: { challengeSettings: SubplebbitChallengeSetting }): ChallengeFileInput {
+function ChallengeFileFactory({ challengeSettings }: { challengeSettings: CommunityChallengeSetting }): ChallengeFileInput {
     const type: ChallengeInput["type"] = "url/iframe";
 
     return {
