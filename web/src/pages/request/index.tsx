@@ -457,8 +457,8 @@ export default function RequestPage({
             <div className="space-y-7 text-center">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  You are now authenticated by all subplebbits that use MintPass as anti-spam
-                  challenge. You can close this page and head back to the Plebbit application of
+                  You are now authenticated by all communities that use MintPass as anti-spam
+                  challenge. You can close this page and head back to the Bitsocial application of
                   your choice.
                 </p>
               </div>

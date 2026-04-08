@@ -107,7 +107,7 @@ describe("MintPass Challenge Integration Test", function () {
 
     console.log("🚀 Starting IPFS...");
     const startKubo = await import('../src/test/start-kubo.js');
-    const result = await startKubo.default();
+    const result = await startKubo.default({ apiPort: 15001, gatewayPort: 18080 });
     ipfsProcess = result.ipfsProcess;
     console.log("✅ IPFS daemon ready");
 
@@ -119,7 +119,7 @@ describe("MintPass Challenge Integration Test", function () {
     // Configure PKC for local testing - no default chain providers to avoid conflicts
     const pkcOptions = {
       httpRoutersOptions: [],
-      kuboRpcClientsOptions: ['http://127.0.0.1:5001/api/v0'],
+      kuboRpcClientsOptions: ['http://127.0.0.1:15001/api/v0'],
       updateInterval: 1000
       // Custom RPC configuration is handled in challenge settings instead
     };
@@ -1883,11 +1883,11 @@ describe("MintPass Challenge Integration Test", function () {
     
     const settings = { ...community.settings };
     const cooldownSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
-    cooldownSettings.options.transferCooldownSeconds = '1';
+    cooldownSettings.options.transferCooldownSeconds = '86400';
     settings.challenges = [cooldownSettings];
     await community.edit({ settings });
     console.log("✅ Community configured with cooldown challenge");
-    
+
     await community.start();
     await waitForCondition(community, (s) => typeof s.updatedAt === "number");
     console.log("✅ Community started and ready");

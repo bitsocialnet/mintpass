@@ -1,12 +1,12 @@
 # Question challenge
 
-API: https://github.com/plebbit/plebbit-js/tree/master/src/runtime/node/subplebbit/challenges/plebbit-js-challenges
+API: https://github.com/pkcprotocol/pkc-js/tree/master/src/runtime/node/community/challenges/pkc-js-challenges
 
 Code:
 
 ```ts
-import type { Challenge, ChallengeFile, ChallengeResult, SubplebbitChallengeSetting } from "../../../../../subplebbit/types.js";
-import type { DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor } from "../../../../../pubsub-messages/types.js";
+import type { Challenge, ChallengeFile, ChallengeResult, CommunityChallengeSetting } from "../../../../../community/types.js";
+import type { DecryptedChallengeRequestMessageTypeWithCommunityAuthor } from "../../../../../pubsub-messages/types.js";
 
 const optionInputs = <NonNullable<ChallengeFile["optionInputs"]>>[
     {
@@ -31,12 +31,12 @@ const type: Challenge["type"] = "text/plain";
 const description = `Ask a question, like 'What is the password?'`;
 
 const getChallenge = async (
-    subplebbitChallengeSettings: SubplebbitChallengeSetting,
-    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor,
+    communityChallengeSettings: CommunityChallengeSetting,
+    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithCommunityAuthor,
     challengeIndex: number
 ): Promise<Challenge | ChallengeResult> => {
-    if (!subplebbitChallengeSettings?.options?.question) throw Error("No option question");
-    let answer = subplebbitChallengeSettings?.options?.answer;
+    if (!communityChallengeSettings?.options?.question) throw Error("No option question");
+    let answer = communityChallengeSettings?.options?.answer;
     if (!answer) {
         throw Error("no option answer");
     }
@@ -47,7 +47,7 @@ const getChallenge = async (
     // the author didn't preinclude his answer, so send him a pubsub challenge message
     if (challengeAnswer === undefined) {
         return {
-            challenge: subplebbitChallengeSettings?.options?.question,
+            challenge: communityChallengeSettings?.options?.question,
             verify: async (_answer: string) => {
                 if (_answer === answer)
                     return {
@@ -76,10 +76,10 @@ const getChallenge = async (
     };
 };
 
-function ChallengeFileFactory(subplebbitChallengeSettings: SubplebbitChallengeSetting): ChallengeFile {
+function ChallengeFileFactory(communityChallengeSettings: CommunityChallengeSetting): ChallengeFile {
     // some challenges can prepublish the challenge so that it can be preanswered
     // in the challengeRequestMessage
-    const question = subplebbitChallengeSettings?.options?.question;
+    const question = communityChallengeSettings?.options?.question;
     const challenge = question;
 
     return { getChallenge, optionInputs, type, challenge, description };

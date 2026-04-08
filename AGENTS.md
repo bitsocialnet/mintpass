@@ -5,7 +5,7 @@
 MintPass is a multi-part authentication system for Bitsocial and other decentralized apps:
 - `web/`: Next.js site + API for SMS verification and mint flow
 - `contracts/`: Solidity contracts for MintPass NFTs
-- `challenge/`: Plebbit challenge module that verifies NFT ownership
+- `challenge/`: PKC challenge module that verifies NFT ownership
 
 This is not a single app repo. Treat it as a coordinated multi-project codebase.
 
@@ -15,7 +15,7 @@ This is not a single app repo. Treat it as a coordinated multi-project codebase.
 mintpass/
 ├── web/         # Next.js 15 app (pages router) + API routes
 ├── contracts/   # Hardhat + Solidity contracts and deployment scripts
-├── challenge/   # TypeScript challenge package for plebbit-js
+├── challenge/   # TypeScript challenge package for pkc-js
 ├── dist/challenge/  # Published challenge artifact copied from challenge/dist
 └── docs/        # Specs and challenge docs
 ```
@@ -32,7 +32,7 @@ Important:
 - TypeScript (strict mode in `web`, `contracts`, `challenge`)
 - Web: Next.js 15, React 19, Tailwind, Radix/shadcn-style UI, Zod, Upstash/Vercel KV
 - Contracts: Solidity `0.8.24`, Hardhat, OpenZeppelin, ethers v6
-- Challenge: TypeScript ESM + `viem` + `keyv`, integrated with plebbit-js challenge interface
+- Challenge: TypeScript ESM + `viem` + `keyv`, integrated with pkc-js challenge interface
 
 ## Commands
 
@@ -154,7 +154,7 @@ Run checks based on what you changed:
 ### Challenge-Specific Rules
 
 - Source of truth is `challenge/src/**`, primarily `challenge/src/mintpass.ts`.
-- Maintain compatibility with plebbit-js challenge contract (factory + option handling).
+- Maintain compatibility with pkc-js challenge contract (factory + option handling).
 - Be careful with chain/wallet fallback behavior and transfer cooldown logic.
 - Rebuild generated outputs when source/public types change.
 

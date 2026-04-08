@@ -173,7 +173,7 @@ async function main() {
     console.log("✅ Total tokens minted:", testResults.totalSupply.toString());
     console.log("✅ All tests passed:", testResults.allTestsPassed);
     console.log("");
-    console.log("🌟 Ready for integration with plebbit-js challenge!");
+    console.log("🌟 Ready for integration with pkc-js challenge!");
 
   } catch (error) {
     console.error("❌ Deploy and test failed:", error);

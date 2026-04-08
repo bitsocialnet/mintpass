@@ -26,8 +26,8 @@ The automated test environment provides:
 
 - **Local Hardhat blockchain** with deterministic MintPass NFT contract deployment
 - **Local IPFS node (Kubo)** configured with `Routing.Type=none` for complete network isolation
-- **Plebbit-js integration** with custom chain providers pointing to the local Hardhat network
-- **IPFS-enabled subplebbit** that can start, receive comments, and process challenges
+- **PKC-js integration** with custom chain providers pointing to the local Hardhat network
+- **IPFS-enabled community** that can start, receive comments, and process challenges
 - **Complete comment publishing flow** with challenge/verification exchange simulation
 
 ### Test Structure
@@ -107,7 +107,7 @@ The test environment's complete network isolation provides:
 The automated testing system provides high confidence for production deployment by validating:
 
 - **Smart contract functionality** - Tests contract deployment and blockchain interaction
-- **Plebbit-js integration** - Validates challenge works correctly within the Plebbit ecosystem
+- **PKC-js integration** - Validates challenge works correctly within the PKC ecosystem
 - **Transfer cooldown mechanism** - Tests the complete cooldown functionality
 - **User experience flow** - Recreates the complete posting workflow users will encounter
 - **Local blockchain integration** - Tests custom chain provider configuration
@@ -115,4 +115,4 @@ The automated testing system provides high confidence for production deployment 
 - **Error handling** - Validates proper error messages and failure modes
 - **Infrastructure robustness** - Tests automatic setup and cleanup procedures
 
-This comprehensive automated testing validates the MintPass challenge system for production deployment and integration with subplebbits across various network environments. 
+This comprehensive automated testing validates the MintPass challenge system for production deployment and integration with communities across various network environments. 

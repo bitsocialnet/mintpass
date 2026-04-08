@@ -12,12 +12,12 @@ export default function PrivacyPolicy() {
           <p className="text-sm text-muted-foreground">
             This document describes how the MintPass website and backend handle data. MintPass is operated by{' '}
             <a 
-              href="https://plebbitlabs.com" 
+              href="https://bitsocial.net" 
               target="_blank" 
               rel="noopener noreferrer"
               className="underline hover:text-foreground/80 transition-colors"
             >
-              Plebbit Labs, Inc.
+              Bitsocial
             </a>
             {' '}This is provided for transparency and is not legal advice.
           </p>
@@ -88,12 +88,12 @@ export default function PrivacyPolicy() {
             <p className="text-sm">
               For questions about this policy, open an issue on the project repository or contact{' '}
               <a 
-                href="https://plebbitlabs.com" 
+                href="https://bitsocial.net" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="underline hover:text-foreground/80 transition-colors"
               >
-                Plebbit Labs, Inc.
+                Bitsocial
               </a>
               . See the project README for details.
             </p>

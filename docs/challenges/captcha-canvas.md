@@ -1,14 +1,14 @@
 # Captcha canvas challenge
 
-API: https://github.com/plebbit/plebbit-js/tree/master/src/runtime/node/subplebbit/challenges/plebbit-js-challenges
+API: https://github.com/pkcprotocol/pkc-js/tree/master/src/runtime/node/community/challenges/pkc-js-challenges
 
 Code:
 
 ```ts
 import { CreateCaptchaOptions } from "captcha-canvas/js-script/constants.js";
 
-import { Challenge, ChallengeFile, ChallengeResult, SubplebbitChallengeSetting } from "../../../../../../subplebbit/types.js";
-import type { DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor } from "../../../../../../pubsub-messages/types.js";
+import { Challenge, ChallengeFile, ChallengeResult, CommunityChallengeSetting } from "../../../../../../community/types.js";
+import type { DecryptedChallengeRequestMessageTypeWithCommunityAuthor } from "../../../../../../pubsub-messages/types.js";
 import { createCaptcha } from "captcha-canvas";
 
 const optionInputs = <NonNullable<ChallengeFile["optionInputs"]>>[
@@ -47,16 +47,16 @@ const type: Challenge["type"] = "image/png";
 const description = "make custom image captcha";
 
 const getChallenge = async (
-    subplebbitChallengeSettings: SubplebbitChallengeSetting,
-    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor,
+    communityChallengeSettings: CommunityChallengeSetting,
+    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithCommunityAuthor,
     challengeIndex: number
 ): Promise<Challenge> => {
     // setCaptchaOptions https://captcha-canvas.js.org/global.html#SetCaptchaOptions
 
-    const width = subplebbitChallengeSettings?.options?.width ? Number(subplebbitChallengeSettings?.options?.width) : 300;
-    const height = subplebbitChallengeSettings?.options?.height ? Number(subplebbitChallengeSettings?.options?.height) : 100;
-    const characters = subplebbitChallengeSettings?.options?.characters ? Number(subplebbitChallengeSettings?.options?.characters) : 6;
-    const colors = subplebbitChallengeSettings?.options?.colors ? (subplebbitChallengeSettings?.options?.colors).split(",") : ["#32cf7e"];
+    const width = communityChallengeSettings?.options?.width ? Number(communityChallengeSettings?.options?.width) : 300;
+    const height = communityChallengeSettings?.options?.height ? Number(communityChallengeSettings?.options?.height) : 100;
+    const characters = communityChallengeSettings?.options?.characters ? Number(communityChallengeSettings?.options?.characters) : 6;
+    const colors = communityChallengeSettings?.options?.colors ? (communityChallengeSettings?.options?.colors).split(",") : ["#32cf7e"];
 
     const setCaptchaOptions: CreateCaptchaOptions["captcha"] = {};
     if (characters) setCaptchaOptions.characters = characters;
@@ -79,7 +79,7 @@ const getChallenge = async (
     return { challenge, verify, type, caseInsensitive: true };
 };
 
-function ChallengeFileFactory(subplebbitChallengeSettings: SubplebbitChallengeSetting): ChallengeFile {
+function ChallengeFileFactory(communityChallengeSettings: CommunityChallengeSetting): ChallengeFile {
     return { getChallenge, optionInputs, type, description, caseInsensitive: true };
 }
 

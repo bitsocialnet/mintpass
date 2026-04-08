@@ -1,12 +1,12 @@
 # Text math challenge
 
-API: https://github.com/plebbit/plebbit-js/tree/master/src/runtime/node/subplebbit/challenges/plebbit-js-challenges
+API: https://github.com/pkcprotocol/pkc-js/tree/master/src/runtime/node/community/challenges/pkc-js-challenges
 
 Code:
 
 ```ts
-import type { Challenge, ChallengeFile, ChallengeResult, SubplebbitChallengeSetting } from "../../../../../subplebbit/types.js";
-import type { DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor } from "../../../../../pubsub-messages/types.js";
+import type { Challenge, ChallengeFile, ChallengeResult, CommunityChallengeSetting } from "../../../../../community/types.js";
+import type { DecryptedChallengeRequestMessageTypeWithCommunityAuthor } from "../../../../../pubsub-messages/types.js";
 
 const optionInputs = <NonNullable<ChallengeFile["optionInputs"]>>[
     {
@@ -43,11 +43,11 @@ const getChallengeString = (minNumber: number, maxNumber: number, operators: ("*
 };
 
 const getChallenge = async (
-    subplebbitChallengeSettings: SubplebbitChallengeSetting,
-    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor,
+    communityChallengeSettings: CommunityChallengeSetting,
+    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithCommunityAuthor,
     challengeIndex: number
 ): Promise<Challenge> => {
-    const difficultyString = subplebbitChallengeSettings?.options?.difficulty || "1";
+    const difficultyString = communityChallengeSettings?.options?.difficulty || "1";
     const difficulty = Number(difficultyString);
 
     let challenge: string;
@@ -73,7 +73,7 @@ const getChallenge = async (
     return { challenge, verify, type };
 };
 
-function ChallengeFileFactory(subplebbitChallengeSettings: SubplebbitChallengeSetting): ChallengeFile {
+function ChallengeFileFactory(communityChallengeSettings: CommunityChallengeSetting): ChallengeFile {
     return { getChallenge, optionInputs, type, description };
 }
 

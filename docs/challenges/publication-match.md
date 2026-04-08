@@ -1,12 +1,12 @@
 # Publication match challenge
 
-API: https://github.com/plebbit/plebbit-js/tree/master/src/runtime/node/subplebbit/challenges/plebbit-js-challenges
+API: https://github.com/pkcprotocol/pkc-js/tree/master/src/runtime/node/community/challenges/pkc-js-challenges
 
 Code:
 
 ```ts
-import type { Challenge, ChallengeFile, ChallengeResult, SubplebbitChallengeSetting } from "../../../../../subplebbit/types.js";
-import type { DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor } from "../../../../../pubsub-messages/types.js";
+import type { Challenge, ChallengeFile, ChallengeResult, CommunityChallengeSetting } from "../../../../../community/types.js";
+import type { DecryptedChallengeRequestMessageTypeWithCommunityAuthor } from "../../../../../pubsub-messages/types.js";
 import { derivePublicationFromChallengeRequest } from "../../../../../util.js";
 import * as remeda from "remeda";
 
@@ -45,8 +45,8 @@ const type: Challenge["type"] = "text/plain";
 const description = "Match publication properties against regex patterns.";
 
 const getChallenge = async (
-    subplebbitChallengeSettings: SubplebbitChallengeSetting,
-    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor,
+    communityChallengeSettings: CommunityChallengeSetting,
+    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithCommunityAuthor,
     challengeIndex: number
 ): Promise<ChallengeResult> => {
     // Get the publication from the challenge request
@@ -61,7 +61,7 @@ const getChallenge = async (
     // Get the matches from the options
     let matches: Match[] = [];
     try {
-        const matchesStr = subplebbitChallengeSettings?.options?.matches;
+        const matchesStr = communityChallengeSettings?.options?.matches;
         if (matchesStr) {
             matches = JSON.parse(matchesStr);
         }
@@ -78,10 +78,10 @@ const getChallenge = async (
     }
 
     // Get the error message
-    const error = subplebbitChallengeSettings?.options?.error || "Publication does not match required patterns.";
+    const error = communityChallengeSettings?.options?.error || "Publication does not match required patterns.";
 
     // Get the matchAll option (default to true)
-    const matchAllStr = subplebbitChallengeSettings?.options?.matchAll;
+    const matchAllStr = communityChallengeSettings?.options?.matchAll;
     const matchAll = matchAllStr !== undefined ? matchAllStr.toLowerCase() === "true" : true;
 
     // Check each match
@@ -157,7 +157,7 @@ const getChallenge = async (
         };
 };
 
-function ChallengeFileFactory(subplebbitChallengeSettings: SubplebbitChallengeSetting): ChallengeFile {
+function ChallengeFileFactory(communityChallengeSettings: CommunityChallengeSetting): ChallengeFile {
     return { getChallenge, optionInputs, type, description };
 }
 

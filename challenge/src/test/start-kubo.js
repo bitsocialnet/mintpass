@@ -1,5 +1,5 @@
 // Script to start IPFS (Kubo) for testing mintpass challenge
-// Based on https://github.com/plebbit/plebbit-react-hooks/blob/master/test/test-server/start-ipfs.js
+// Based on https://github.com/pkcprotocol/pkc-react-hooks/blob/master/test/test-server/start-ipfs.js
 // Configured for local-only testing without external network dependencies
 
 import {exec, execSync} from 'child_process';

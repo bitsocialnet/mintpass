@@ -1,6 +1,6 @@
-# MintPass Challenge for Plebbit-js
+# MintPass Challenge for PKC-js
 
-This directory contains the MintPass challenge implementation for plebbit-js that verifies users own a MintPass NFT.
+This directory contains the MintPass challenge implementation for pkc-js that verifies users own a MintPass NFT.
 
 ## Features
 
@@ -12,7 +12,7 @@ This directory contains the MintPass challenge implementation for plebbit-js tha
 
 ## Installation
 
-For use in plebbit-js projects, clone the mintpass repo alongside your plebbit-js project:
+For use in pkc-js projects, clone the mintpass repo alongside your pkc-js project:
 
 ```bash
 # Clone mintpass repo 
@@ -41,8 +41,8 @@ const challengeSettings = {
   }
 };
 
-// Set on subplebbit
-subplebbit.settings.challenges = [challengeSettings];
+// Set on community
+community.settings.challenges = [challengeSettings];
 ```
 
 ### Directory Structure
@@ -50,7 +50,7 @@ subplebbit.settings.challenges = [challengeSettings];
 Your project should look like:
 ```
 your-project/
-├── plebbit-js/           # Your plebbit-js fork
+├── pkc-js/               # Your pkc-js fork
 └── mintpass/             # Cloned mintpass repo
     └── challenge/
         └── dist/
@@ -85,7 +85,7 @@ your-project/
 - If `contractAddress` is omitted and `chainTicker` is supported, the challenge uses a known default for that chain (e.g., Base Sepolia reference deployment).
 - You can still override `contractAddress` explicitly in settings.
 
-The challenge tracks when NFTs are used by different plebbit accounts and enforces a cooldown period to prevent:
+The challenge tracks when NFTs are used by different PKC accounts and enforces a cooldown period to prevent:
 - Quick transfers to bypass bans
 - NFT sharing between multiple accounts
 - Sybil attacks via NFT circulation
@@ -136,19 +136,19 @@ The automated test suite includes:
 
 For detailed testing information, see [AUTOMATED_TESTING.md](AUTOMATED_TESTING.md).
 
-### Integration with plebbit-js
+### Integration with pkc-js
 
-The challenge exports a `ChallengeFileFactory` function compatible with plebbit-js:
+The challenge exports a `ChallengeFileFactory` function compatible with pkc-js:
 
 ```javascript
-// In your plebbit-js fork
+// In your pkc-js fork
 import mintpass from '@bitsocial/mintpass-challenge';
 
 // Register the challenge
-Plebbit.challenges.mintpass = mintpass;
+PKC.challenges.mintpass = mintpass;
 
-// Use in subplebbit settings
-const subplebbit = await plebbit.createSubplebbit({
+// Use in community settings
+const community = await pkc.createCommunity({
   settings: {
     challenges: [{
       name: 'mintpass',
@@ -163,11 +163,11 @@ const subplebbit = await plebbit.createSubplebbit({
 
 ## Architecture
 
-The challenge follows the plebbit-js challenge pattern:
+The challenge follows the pkc-js challenge pattern:
 
 1. **Wallet Verification**: Validates author's wallet signature
 2. **NFT Ownership Check**: Calls `ownsTokenType()` on MintPass contract
-3. **Transfer Cooldown**: Tracks NFT usage across plebbit accounts
+3. **Transfer Cooldown**: Tracks NFT usage across PKC accounts
 4. **ENS Support**: Resolves ENS addresses to wallet addresses
 
 ## Error Scenarios

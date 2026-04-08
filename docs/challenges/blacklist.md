@@ -1,11 +1,11 @@
 # Blacklist challenge
 
-API: https://github.com/plebbit/plebbit-js/tree/master/src/runtime/node/subplebbit/challenges/plebbit-js-challenges
+API: https://github.com/pkcprotocol/pkc-js/tree/master/src/runtime/node/community/challenges/pkc-js-challenges
 
 Code: 
 ```ts
-import { Challenge, ChallengeFile, ChallengeResult, SubplebbitChallengeSetting } from "../../../../../subplebbit/types.js";
-import type { DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor } from "../../../../../pubsub-messages/types.js";
+import { Challenge, ChallengeFile, ChallengeResult, CommunityChallengeSetting } from "../../../../../community/types.js";
+import type { DecryptedChallengeRequestMessageTypeWithCommunityAuthor } from "../../../../../pubsub-messages/types.js";
 import { derivePublicationFromChallengeRequest } from "../../../../../util.js";
 
 const optionInputs = <NonNullable<ChallengeFile["optionInputs"]>>[
@@ -30,13 +30,13 @@ const type: Challenge["type"] = "text/plain";
 const description = "Blacklist author addresses.";
 
 const getChallenge = async (
-    subplebbitChallengeSettings: SubplebbitChallengeSetting,
-    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithSubplebbitAuthor,
+    communityChallengeSettings: CommunityChallengeSetting,
+    challengeRequestMessage: DecryptedChallengeRequestMessageTypeWithCommunityAuthor,
     challengeIndex: number
 ): Promise<ChallengeResult> => {
     // add a custom error message to display to the author
-    const error = subplebbitChallengeSettings?.options?.error;
-    const blacklist = subplebbitChallengeSettings?.options?.blacklist?.split(",");
+    const error = communityChallengeSettings?.options?.error;
+    const blacklist = communityChallengeSettings?.options?.blacklist?.split(",");
     const blacklistSet = new Set(blacklist);
 
     const publication = derivePublicationFromChallengeRequest(challengeRequestMessage);
@@ -52,7 +52,7 @@ const getChallenge = async (
     };
 };
 
-function ChallengeFileFactory(subplebbitChallengeSettings: SubplebbitChallengeSetting): ChallengeFile {
+function ChallengeFileFactory(communityChallengeSettings: CommunityChallengeSetting): ChallengeFile {
     return { getChallenge, optionInputs, type, description };
 }
 

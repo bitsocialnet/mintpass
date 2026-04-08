@@ -73,6 +73,6 @@ deployments/local/
 .coverage_cache/
 .coverage_contracts/
 
-.plebbit
+.pkc
 .cursor
 .codex

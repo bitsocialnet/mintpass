@@ -12,12 +12,12 @@ export default function TermsAndConditions() {
           <p className="text-sm text-muted-foreground">
             Please read these terms carefully before using MintPass. MintPass is operated by{' '}
             <a 
-              href="https://plebbitlabs.com" 
+              href="https://bitsocial.net" 
               target="_blank" 
               rel="noopener noreferrer"
               className="underline hover:text-foreground/80 transition-colors"
             >
-              Plebbit Labs, Inc.
+              Bitsocial
             </a>
           </p>
 

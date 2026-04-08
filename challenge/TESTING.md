@@ -1,12 +1,12 @@
 # Testing the MintPass Challenge
 
-This guide explains how to test the MintPass challenge locally before integrating with plebbit-js.
+This guide explains how to test the MintPass challenge locally before integrating with pkc-js.
 
 ## Prerequisites
 
 1. **Node.js** version 18 or higher
 2. **Yarn** package manager
-3. **Plebbit RPC Node** or local hardhat for testing
+3. **PKC RPC Node** or local hardhat for testing
 
 ## Quick Setup
 
@@ -32,7 +32,7 @@ Edit `challenge/.env` and set your RPC_URL:
 # For local hardhat testing
 RPC_URL=http://127.0.0.1:8545
 
-# OR for plebbit node testing  
+# OR for pkc node testing  
 RPC_URL=ws://127.0.0.1:9138/your-secret-key
 ```
 
@@ -86,51 +86,51 @@ Successful test run:
 🎯 Minting test NFTs...
 ✅ SMS token minted, tx: 0x...
 ✅ EMAIL token minted, tx: 0x...
-🌐 Setting up Plebbit and Subplebbit...
-✅ Plebbit instance created
-✅ Subplebbit created: 12D3KooW...
+🌐 Setting up PKC and Community...
+✅ PKC instance created
+✅ Community created: 12D3KooW...
 ⚙️ Setting up MintPass challenge...
 ✅ MintPass challenge configured
 🧪 Testing Challenge Scenarios...
-✅ Expected to pass (actual test requires full plebbit-js integration)
-✅ Expected to fail (actual test requires full plebbit-js integration)
+✅ Expected to pass (actual test requires full pkc-js integration)
+✅ Expected to fail (actual test requires full pkc-js integration)
 
 🎉 INTEGRATION TEST SUMMARY
 ============================
 ✅ Contract deployed and accessible
 ✅ Test NFTs minted successfully  
-✅ Plebbit instance created
+✅ PKC instance created
 ✅ MintPass challenge configured
 ✅ Challenge scenarios tested
 
-🌟 Ready for full plebbit-js integration!
+🌟 Ready for full pkc-js integration!
 ```
 
-## Integration with plebbit-js Fork
+## Integration with pkc-js Fork
 
-Once testing passes, you can integrate with your plebbit-js fork:
+Once testing passes, you can integrate with your pkc-js fork:
 
-### 1. In your plebbit-js fork, install the challenge:
+### 1. In your pkc-js fork, install the challenge:
 
 ```bash
-cd path/to/plebbit-js-fork
+cd path/to/pkc-js-fork
 yarn add file:../mintpass/challenges
 ```
 
 ### 2. Import and register the challenge:
 
 ```javascript
-// In plebbit-js/src/runtime/node/subplebbit/challenges/index.js
+// In pkc-js/src/runtime/node/community/challenges/index.js
 import mintpassChallenge from '@bitsocial/mintpass-challenge/mintpass';
 
 // Add to challenges export
-export const plebbitJsChallenges = {
+export const pkcJsChallenges = {
   ...existingChallenges,
   mintpass: mintpassChallenge
 };
 ```
 
-### 3. Use in subplebbit settings:
+### 3. Use in community settings:
 
 ```javascript
 const challengeSettings = {
@@ -144,23 +144,23 @@ const challengeSettings = {
   }
 };
 
-subplebbit.settings.challenges = [challengeSettings];
+community.settings.challenges = [challengeSettings];
 ```
 
-### 4. Test with real plebbit-js:
+### 4. Test with real pkc-js:
 
 ```javascript
     // Example usage for comment publishing
-import Plebbit from '@plebbit/plebbit-js'
+import PKC from '@pkcprotocol/pkc-js'
 
-const plebbit = await Plebbit({
-  plebbitRpcClientsOptions: [process.env.RPC_URL]
+const pkc = await PKC({
+  pkcRpcClientsOptions: [process.env.RPC_URL]
 })
 
-const subplebbit = await plebbit.createSubplebbit({address: 'your-test-sub'})
-const settings = {...subplebbit.settings}
+const community = await pkc.createCommunity({address: 'your-test-sub'})
+const settings = {...community.settings}
 settings.challenges = [challengeSettings]
-await subplebbit.edit({settings})
+await community.edit({settings})
 ```
 
 ## Troubleshooting
@@ -169,9 +169,9 @@ await subplebbit.edit({settings})
 - Make sure you ran `yarn deploy-and-test` in contracts directory
 - Check that hardhat node is running on correct port
 
-### Plebbit connection issues  
+### PKC connection issues  
 - Verify RPC_URL is correct
-- Make sure plebbit node is running and accessible
+- Make sure pkc node is running and accessible
 
 ### Build errors
 - Run `yarn clean` and `yarn build` again
@@ -185,8 +185,8 @@ await subplebbit.edit({settings})
 ## Next Steps
 
 1. **Local Testing**: Complete local testing as described above
-2. **Fork Integration**: Integrate challenge into your plebbit-js fork  
-3. **Real Testing**: Test with actual plebbit subplebbits
+2. **Fork Integration**: Integrate challenge into your pkc-js fork  
+3. **Real Testing**: Test with actual PKC communities
 4. **Production**: Deploy to production with Base mainnet contract address
 
 Remember to use the correct contract addresses:

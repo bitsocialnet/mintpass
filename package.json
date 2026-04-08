@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "NFT-based authentication system for PKC communities",
-  "author": "Plebbit Labs",
+  "author": "Bitsocial",
   "license": "MIT",
   "exports": {
     "./challenge": {
