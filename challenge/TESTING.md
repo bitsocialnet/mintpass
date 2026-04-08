@@ -121,7 +121,7 @@ yarn add file:../mintpass/challenges
 
 ```javascript
 // In plebbit-js/src/runtime/node/subplebbit/challenges/index.js
-import mintpassChallenge from '@mintpass/challenge/mintpass';
+import mintpassChallenge from '@bitsocial/mintpass-challenge/mintpass';
 
 // Add to challenges export
 export const plebbitJsChallenges = {

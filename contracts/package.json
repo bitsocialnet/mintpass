@@ -1,5 +1,5 @@
 {
-  "name": "@mintpass/contracts",
+  "name": "@bitsocial/mintpass-contracts",
   "version": "1.0.0",
   "private": true,
   "description": "MintPassV1 NFT smart contracts",

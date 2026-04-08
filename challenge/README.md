@@ -142,7 +142,7 @@ The challenge exports a `ChallengeFileFactory` function compatible with plebbit-
 
 ```javascript
 // In your plebbit-js fork
-import mintpass from '@mintpass/challenge';
+import mintpass from '@bitsocial/mintpass-challenge';
 
 // Register the challenge
 Plebbit.challenges.mintpass = mintpass;

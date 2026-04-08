@@ -1,4 +1,4 @@
-name: Publish @mintpass/challenge to npm
+name: Publish @bitsocial/mintpass-challenge to npm
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
         id: check_version
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if npm view @mintpass/challenge@$PACKAGE_VERSION version 2>/dev/null; then
+          if npm view @bitsocial/mintpass-challenge@$PACKAGE_VERSION version 2>/dev/null; then
             echo "Version $PACKAGE_VERSION already exists on npm, skipping publish"
             echo "exists=true" >> $GITHUB_OUTPUT
           else

@@ -1,6 +1,6 @@
 {
-  "name": "@mintpass/challenge",
-  "version": "1.2.0",
+  "name": "@bitsocial/mintpass-challenge",
+  "version": "1.2.1",
   "description": "MintPass pkc-js challenge implementation",
   "type": "module",
   "main": "dist/index.js",

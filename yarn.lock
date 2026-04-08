@@ -82,6 +82,63 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bitsocial/mintpass-challenge@workspace:challenge":
+  version: 0.0.0-use.local
+  resolution: "@bitsocial/mintpass-challenge@workspace:challenge"
+  dependencies:
+    "@keyv/sqlite": "npm:^4.0.5"
+    "@pkc/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
+    "@pkcprotocol/pkc-js": "git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c"
+    "@types/chai": "npm:^4.2.0"
+    "@types/mocha": "npm:^10.0.10"
+    "@types/node": "npm:^22.7.8"
+    chai: "npm:^4.2.0"
+    conventional-changelog-cli: "npm:^5.0.0"
+    env-paths: "npm:^3.0.0"
+    ethers: "npm:6.16.0"
+    hardhat: "npm:^2.28.6"
+    keyv: "npm:5.5.0"
+    kubo: "npm:0.36.0"
+    multiformats: "npm:^13.1.0"
+    tempy: "npm:^3.1.0"
+    typescript: "npm:^6.0.2"
+    uint8arrays: "npm:^4.0.3"
+    viem: "npm:2.45.0"
+  peerDependencies:
+    "@pkcprotocol/pkc-js": ">=0.0.0"
+  languageName: unknown
+  linkType: soft
+
+"@bitsocial/mintpass-contracts@workspace:contracts":
+  version: 0.0.0-use.local
+  resolution: "@bitsocial/mintpass-contracts@workspace:contracts"
+  dependencies:
+    "@nomicfoundation/hardhat-chai-matchers": "npm:^2.0.0"
+    "@nomicfoundation/hardhat-ethers": "npm:^3.0.0"
+    "@nomicfoundation/hardhat-network-helpers": "npm:^1.0.0"
+    "@nomicfoundation/hardhat-toolbox": "npm:^4.0.0"
+    "@nomicfoundation/hardhat-verify": "npm:^2.0.0"
+    "@openzeppelin/contracts": "npm:^5.0.0"
+    "@typechain/ethers-v6": "npm:^0.5.0"
+    "@typechain/hardhat": "npm:^9.0.0"
+    "@types/chai": "npm:^4.2.0"
+    "@types/mocha": "npm:^10.0.10"
+    "@types/node": "npm:^24.0.10"
+    chai: "npm:^4.2.0"
+    dotenv: "npm:^16.5.0"
+    ethers: "npm:6.16.0"
+    hardhat: "npm:^2.28.6"
+    hardhat-contract-sizer: "npm:^2.10.0"
+    hardhat-gas-reporter: "npm:^1.0.8"
+    mocha: "npm:^11.7.1"
+    solhint: "npm:^5.1.0"
+    solidity-coverage: "npm:^0.8.1"
+    ts-node: "npm:^10.9.2"
+    typechain: "npm:^8.3.0"
+    typescript: "npm:>=6.0.2"
+  languageName: unknown
+  linkType: soft
+
 "@bitsocialnet/mintpass@workspace:.":
   version: 0.0.0-use.local
   resolution: "@bitsocialnet/mintpass@workspace:."
@@ -1703,63 +1760,6 @@ __metadata:
   checksum: 10c0/8094d6aa8f14bae035f16bd4604624c3b654093fe393c64512325dd91d574a9ac794b2445ead8123b64dd1d57e0a6bec32e44d0c0f54e5de024703a54db9c25c
   languageName: node
   linkType: hard
-
-"@mintpass/challenge@workspace:challenge":
-  version: 0.0.0-use.local
-  resolution: "@mintpass/challenge@workspace:challenge"
-  dependencies:
-    "@keyv/sqlite": "npm:^4.0.5"
-    "@pkc/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
-    "@pkcprotocol/pkc-js": "git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c"
-    "@types/chai": "npm:^4.2.0"
-    "@types/mocha": "npm:^10.0.10"
-    "@types/node": "npm:^22.7.8"
-    chai: "npm:^4.2.0"
-    conventional-changelog-cli: "npm:^5.0.0"
-    env-paths: "npm:^3.0.0"
-    ethers: "npm:6.16.0"
-    hardhat: "npm:^2.28.6"
-    keyv: "npm:5.5.0"
-    kubo: "npm:0.36.0"
-    multiformats: "npm:^13.1.0"
-    tempy: "npm:^3.1.0"
-    typescript: "npm:^6.0.2"
-    uint8arrays: "npm:^4.0.3"
-    viem: "npm:2.45.0"
-  peerDependencies:
-    "@pkcprotocol/pkc-js": ">=0.0.0"
-  languageName: unknown
-  linkType: soft
-
-"@mintpass/contracts@workspace:contracts":
-  version: 0.0.0-use.local
-  resolution: "@mintpass/contracts@workspace:contracts"
-  dependencies:
-    "@nomicfoundation/hardhat-chai-matchers": "npm:^2.0.0"
-    "@nomicfoundation/hardhat-ethers": "npm:^3.0.0"
-    "@nomicfoundation/hardhat-network-helpers": "npm:^1.0.0"
-    "@nomicfoundation/hardhat-toolbox": "npm:^4.0.0"
-    "@nomicfoundation/hardhat-verify": "npm:^2.0.0"
-    "@openzeppelin/contracts": "npm:^5.0.0"
-    "@typechain/ethers-v6": "npm:^0.5.0"
-    "@typechain/hardhat": "npm:^9.0.0"
-    "@types/chai": "npm:^4.2.0"
-    "@types/mocha": "npm:^10.0.10"
-    "@types/node": "npm:^24.0.10"
-    chai: "npm:^4.2.0"
-    dotenv: "npm:^16.5.0"
-    ethers: "npm:6.16.0"
-    hardhat: "npm:^2.28.6"
-    hardhat-contract-sizer: "npm:^2.10.0"
-    hardhat-gas-reporter: "npm:^1.0.8"
-    mocha: "npm:^11.7.1"
-    solhint: "npm:^5.1.0"
-    solidity-coverage: "npm:^0.8.1"
-    ts-node: "npm:^10.9.2"
-    typechain: "npm:^8.3.0"
-    typescript: "npm:>=6.0.2"
-  languageName: unknown
-  linkType: soft
 
 "@multiformats/base-x@npm:^4.0.1":
   version: 4.0.1
