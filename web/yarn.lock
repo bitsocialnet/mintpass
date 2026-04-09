@@ -5500,9 +5500,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-doctor@npm:0.0.28":
-  version: 0.0.28
-  resolution: "react-doctor@npm:0.0.28"
+"react-doctor@npm:0.0.31":
+  version: 0.0.31
+  resolution: "react-doctor@npm:0.0.31"
   dependencies:
     commander: "npm:^14.0.3"
     eslint-plugin-react-hooks: "npm:^7.0.1"
@@ -5514,7 +5514,7 @@ __metadata:
     typescript: "npm:>=5.0.4 <7"
   bin:
     react-doctor: dist/cli.js
-  checksum: 10c0/669fae33169e161fb99882441561845a42f41f1e54da59e725be28b919593d27fc1d3529d82d631289581ba4d192b195deef10c44952515e8ad8740fdc35c848
+  checksum: 10c0/d18f78472ecbf6e019bb498a5f9661cb8dc53bb612c911ea278d94d06bcba39bffe3c62fe1079f65be493295a33d9d00c720ac733710010b4a3800a0460a3546
   languageName: node
   linkType: hard
 
@@ -6772,7 +6772,7 @@ __metadata:
     portless: "npm:0.7.0"
     postcss: "npm:^8.5.6"
     react: "npm:19.2.3"
-    react-doctor: "npm:0.0.28"
+    react-doctor: "npm:0.0.31"
     react-dom: "npm:19.2.3"
     react-phone-number-input: "npm:^3.4.12"
     tailwind-merge: "npm:^3.3.1"
