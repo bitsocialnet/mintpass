@@ -63,9 +63,12 @@ const startIpfs = ({apiPort = 5001, gatewayPort = 8080, args = '--enable-pubsub-
     console.log('IPFS stdout:', data.toString())
   })
   ipfsProcess.on('error', console.error)
+  let expectedShutdown = false
   ipfsProcess.on('exit', (code) => {
     console.error(`IPFS process with pid ${ipfsProcess.pid} exited with code ${code}`)
-    process.exit(code || 1)
+    if (!expectedShutdown) {
+      process.exit(code || 1)
+    }
   })
   
   // Cleanup on exit
@@ -99,7 +102,8 @@ const startIpfs = ({apiPort = 5001, gatewayPort = 8080, args = '--enable-pubsub-
   return {
     ipfsDaemonIsReady,
     process: ipfsProcess,
-    dataPath: ipfsDataPath
+    dataPath: ipfsDataPath,
+    stop: () => { expectedShutdown = true; ipfsProcess.kill('SIGTERM') }
   }
 }
 

@@ -82,7 +82,7 @@ const waitForCondition = (obj, condition, timeout = 30000) => {
 };
 
 describe("MintPass Challenge Integration Test", function () {
-  let mintpass, admin, minter, pkc, pkcForPublishing, chainProviderUrl, ipfsProcess;
+  let mintpass, admin, minter, pkc, pkcForPublishing, chainProviderUrl, ipfsProcess, stopIpfs;
   
   const NAME = "MintPassV1";
   const SYMBOL = "MINT1";
@@ -93,7 +93,13 @@ describe("MintPass Challenge Integration Test", function () {
 
   before(async function () {
     console.log("\n🚀 Setting up MintPass Challenge Integration Test Environment");
-    
+
+    // Clear stale binding database to ensure test isolation across runs
+    const envPaths = (await import('env-paths')).default;
+    const fs = await import('fs');
+    const dbPath = envPaths('mintpass').data + '/challenge-bindings.sqlite';
+    try { fs.unlinkSync(dbPath); console.log("🗑️ Cleared stale binding database"); } catch (_e) { /* doesn't exist yet */ }
+
     [admin, minter] = await ethers.getSigners();
     
     console.log("📋 Deploying MintPassV1 contract...");
@@ -108,7 +114,8 @@ describe("MintPass Challenge Integration Test", function () {
     console.log("🚀 Starting IPFS...");
     const startKubo = await import('../src/test/start-kubo.js');
     const result = await startKubo.default({ apiPort: 15001, gatewayPort: 18080 });
-    ipfsProcess = result.ipfsProcess;
+    ipfsProcess = result.process;
+    stopIpfs = result.stop;
     console.log("✅ IPFS daemon ready");
 
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -152,9 +159,9 @@ describe("MintPass Challenge Integration Test", function () {
       }
     }
 
-    if (ipfsProcess) {
+    if (stopIpfs) {
       try {
-        ipfsProcess.kill('SIGTERM');
+        stopIpfs();
         console.log("✅ IPFS daemon stopped");
       } catch (error) {
         console.log("⚠️ Error stopping IPFS:", error.message);

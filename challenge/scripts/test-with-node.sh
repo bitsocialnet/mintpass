@@ -12,34 +12,53 @@ echo -e "${GREEN}🚀 Starting MintPass integration test with automated node man
 cleanup() {
     if [ ! -z "$NODE_PID" ]; then
         echo -e "${YELLOW}🧹 Cleaning up Hardhat node (PID: $NODE_PID)...${NC}"
-        
+
         # First try graceful termination
         if kill $NODE_PID 2>/dev/null; then
             # Wait a moment for graceful shutdown
             sleep 2
-            
+
             # If still running, force kill
             if kill -0 $NODE_PID 2>/dev/null; then
                 echo -e "${YELLOW}⚠️ Graceful shutdown failed, force killing...${NC}"
                 kill -9 $NODE_PID 2>/dev/null
             fi
         fi
-        
+
         # Wait for the process to be fully reaped to prevent zombie processes
         wait $NODE_PID 2>/dev/null || true
-        
+
         # Clean up any remaining node processes on port 8545
         if lsof -ti:8545 >/dev/null 2>&1; then
             echo -e "${YELLOW}🧹 Cleaning up remaining processes on port 8545...${NC}"
             lsof -ti:8545 | xargs kill -9 2>/dev/null || true
         fi
-        
+
         echo -e "${GREEN}✅ Hardhat node stopped${NC}"
+    fi
+
+    # Clean up any IPFS processes on port 15001 (started by the test via start-kubo.js)
+    if lsof -ti:15001 >/dev/null 2>&1; then
+        echo -e "${YELLOW}🧹 Cleaning up IPFS processes on port 15001...${NC}"
+        lsof -ti:15001 | xargs kill 2>/dev/null || true
+        sleep 1
+        # Force kill if still around
+        if lsof -ti:15001 >/dev/null 2>&1; then
+            lsof -ti:15001 | xargs kill -9 2>/dev/null || true
+        fi
+        echo -e "${GREEN}✅ IPFS stopped${NC}"
     fi
 }
 
 # Set trap to cleanup on script exit (success or failure)
 trap cleanup EXIT
+
+# Kill any stale IPFS from a previous run before starting
+if lsof -ti:15001 >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️ Killing stale IPFS process on port 15001...${NC}"
+    lsof -ti:15001 | xargs kill 2>/dev/null || true
+    sleep 1
+fi
 
 # Start Hardhat node in background
 echo -e "${YELLOW}🔧 Starting Hardhat node...${NC}"
