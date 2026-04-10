@@ -61,6 +61,82 @@ mintpass/
 - Challenge: `cd challenge && yarn install && yarn test`
 - Web: `cd web && yarn install && yarn dev` then open `http://mintpass.localhost:1355/request`
 
+## Using MintPass in your community
+
+Community owners add the MintPass challenge to their community settings. When enabled, every publication (post, reply, vote) requires the author to hold a valid MintPass NFT. The challenge is published as [`@bitsocial/mintpass-challenge`](https://www.npmjs.com/package/@bitsocial/mintpass-challenge) on npm.
+
+### With pkc-js (TypeScript)
+
+Install the challenge package:
+
+```bash
+npm install @bitsocial/mintpass-challenge
+```
+
+Register the challenge and configure your community:
+
+```typescript
+import PKC from '@pkcprotocol/pkc-js'
+import mintpassChallenge from '@bitsocial/mintpass-challenge'
+
+// Register the challenge so it can be referenced by name
+PKC.challenges['mintpass'] = mintpassChallenge
+
+const pkc = await PKC({ /* your pkc options */ })
+const community = await pkc.createCommunity({ address: 'your-community.bso' })
+
+await community.edit({
+  settings: {
+    challenges: [{
+      name: 'mintpass',
+      options: {
+        chainTicker: 'base',
+        contractAddress: '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9',
+        requiredTokenType: '0',
+        bindToFirstAuthor: 'true',
+        transferCooldownSeconds: '604800',
+      }
+    }]
+  }
+})
+```
+
+#### Challenge options
+
+All option values must be strings (pkc-js challenge convention).
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `chainTicker` | `"base"` | Chain where MintPass is deployed |
+| `contractAddress` | Base Sepolia default | Contract address (auto-detected for supported chains) |
+| `requiredTokenType` | `"0"` | Token type (0 = SMS, 1 = Email) |
+| `bindToFirstAuthor` | `"true"` | Bind NFT to first author per community |
+| `transferCooldownSeconds` | `"604800"` | Cooldown after NFT transfer (1 week) |
+| `error` | Default message | Custom error (`{authorAddress}` placeholder supported) |
+| `rpcUrl` | Chain default | Optional custom RPC URL |
+
+### With bitsocial-cli
+
+Install the challenge package:
+
+```bash
+bitsocial challenge install @bitsocial/mintpass-challenge
+```
+
+Edit your community to use the challenge:
+
+```bash
+bitsocial community edit your-community.bso \
+  '--settings.challenges[0].name' mintpass \
+  '--settings.challenges[0].options.chainTicker' base \
+  '--settings.challenges[0].options.contractAddress' '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9' \
+  '--settings.challenges[0].options.requiredTokenType' '0' \
+  '--settings.challenges[0].options.bindToFirstAuthor' 'true' \
+  '--settings.challenges[0].options.transferCooldownSeconds' '604800'
+```
+
+See the [bitsocial-cli documentation](https://github.com/bitsocialnet/bitsocial-cli) for full CLI reference.
+
 ## Where MintPass is useful
 
 While designed for Bitsocial, any decentralized or serverless social app can use MintPass NFTs as a lightweight proof‑of‑personhood. Apps only need to check ownership of a token type (e.g., type 0 for SMS) to gate actions or increase trust in votes and reports.
