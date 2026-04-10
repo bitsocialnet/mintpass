@@ -87,8 +87,8 @@ __metadata:
   resolution: "@bitsocial/mintpass-challenge@workspace:challenge"
   dependencies:
     "@keyv/sqlite": "npm:^4.0.5"
-    "@pkc/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
     "@pkcprotocol/pkc-js": "git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c"
+    "@pkcprotocol/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
     "@types/chai": "npm:^4.2.0"
     "@types/mocha": "npm:^10.0.10"
     "@types/node": "npm:^22.7.8"
@@ -2533,6 +2533,15 @@ __metadata:
     uuid: "npm:13.0.0"
     zod: "npm:4.3.6"
   checksum: 10c0/522ed96759ec79f994234ea29ad60c41d4b26f18eecd4efcabd67487ca5e822d5dde7b5aae168b614d175f4d00cf436388509b7b79c9fcd57b1119ad59841f97
+  languageName: node
+  linkType: hard
+
+"@pkcprotocol/pkc-logger@github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a":
+  version: 0.0.1
+  resolution: "@pkcprotocol/pkc-logger@https://github.com/pkcprotocol/pkc-logger.git#commit=cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
+  dependencies:
+    debug: "npm:4.4.3"
+  checksum: 10c0/1729428ebdc977885dce554893894e7187fb460986119201fddc72e600a0ec07fb61129d884528a9feae83e05cdc71f7889c32d46d12f3292ce6765a96e927ef
   languageName: node
   linkType: hard
 

@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@keyv/sqlite": "^4.0.5",
-    "@pkc/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a",
+    "@pkcprotocol/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a",
     "env-paths": "^3.0.0",
     "keyv": "5.5.0",
     "multiformats": "^13.1.0",
