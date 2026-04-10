@@ -1891,6 +1891,8 @@ describe("MintPass Challenge Integration Test", function () {
     const settings = { ...community.settings };
     const cooldownSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
     cooldownSettings.options.transferCooldownSeconds = '86400';
+    // Disable binding to isolate cooldown behavior (Test 23 covers binding separately)
+    cooldownSettings.options.bindToFirstAuthor = 'false';
     settings.challenges = [cooldownSettings];
     await community.edit({ settings });
     console.log("✅ Community configured with cooldown challenge");

@@ -371,6 +371,10 @@ const validateMintPassOwnership = async (props) => {
             const boundAuthor = await bindingsStore.get(bindingKey);
             // If token was never used, or was used by the same author, it's valid
             if (!lastUsageRecord || lastUsageRecord.authorAddress === props.authorAddress) {
+                // Check binding before any side effects
+                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
+                    return `This MintPass NFT is already bound to another author in this community.`;
+                }
                 hasValidToken = true;
                 // Update the cache with current usage
                 await transferCooldownStore.set(tokenCacheKey, {
@@ -380,16 +384,16 @@ const validateMintPassOwnership = async (props) => {
                 // Bind to first author if enabled
                 if (props.bindToFirstAuthor && !boundAuthor) {
                     await bindingsStore.set(bindingKey, props.authorAddress);
-                }
-                // If binding exists and mismatches, reject
-                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
-                    return `This MintPass NFT is already bound to another author in this community.`;
                 }
                 break;
             }
             // If token was used by different author, check cooldown
             const timeSinceLastUse = now - lastUsageRecord.timestamp;
             if (timeSinceLastUse >= props.transferCooldownSeconds) {
+                // Check binding before any side effects
+                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
+                    return `This MintPass NFT is already bound to another author in this community.`;
+                }
                 hasValidToken = true;
                 // Update the cache with current usage
                 await transferCooldownStore.set(tokenCacheKey, {
@@ -399,9 +403,6 @@ const validateMintPassOwnership = async (props) => {
                 // Bind to first author if enabled
                 if (props.bindToFirstAuthor && !boundAuthor) {
                     await bindingsStore.set(bindingKey, props.authorAddress);
-                }
-                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
-                    return `This MintPass NFT is already bound to another author in this community.`;
                 }
                 break;
             }
