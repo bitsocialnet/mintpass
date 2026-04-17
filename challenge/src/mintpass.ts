@@ -16,7 +16,7 @@ type PublicationWithCommunityAuthorFromDecryptedChallengeRequest = NonNullable<
     DecryptedChallengeRequestMessageTypeWithCommunityAuthor['communityEdit']
 >;
 
-const log = Logger("pkc-js:challenge:mintpass");
+const log = Logger("bitsocial:challenge:mintpass");
 
 /**
  * Extract the publication from a challenge request message.

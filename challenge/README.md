@@ -1,185 +1,124 @@
-# MintPass Challenge for PKC-js
+# @bitsocial/mintpass-challenge
 
-This directory contains the MintPass challenge implementation for pkc-js that verifies users own a MintPass NFT.
+MintPass challenge for pkc-js that verifies users own a MintPass NFT before publishing.
 
-## Features
+## Requirements
 
-- **NFT Ownership Verification**: Checks if users own a MintPass NFT of the required type
-- **Transfer Cooldown Protection**: Prevents quick NFT transfers between accounts to bypass verification
-- **Chain Flexibility**: Supports different chains where MintPass contracts are deployed
-- **ENS Support**: Works with ENS addresses and wallet addresses
-- **Type-specific Requirements**: Can require specific token types (SMS=0, Email=1, etc.)
+- Node.js `>=22`
+- ESM-only environment
 
-## Installation
+## Using mintpass in your community
 
-For use in pkc-js projects, clone the mintpass repo alongside your pkc-js project:
+Community owners add the mintpass challenge to their community settings. When enabled, every publication (post, reply, vote) requires the author to own a MintPass NFT. The challenge is published as [`@bitsocial/mintpass-challenge`](https://www.npmjs.com/package/@bitsocial/mintpass-challenge) on npm.
 
-```bash
-# Clone mintpass repo 
-git clone https://github.com/your-username/mintpass.git
+### With pkc-js over RPC
 
-# Build the challenge
-cd mintpass
-yarn install
-yarn build:challenge
-```
-
-## Usage
-
-### Basic Challenge Configuration
-
-```javascript
-// Import via file path (not package import)
-const challengeSettings = {
-  path: '../mintpass/challenge/dist/mintpass.js', // Relative path to built challenge
-  options: {
-    chainTicker: 'base',
-    contractAddress: '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9',
-    requiredTokenType: '0', // 0 = SMS verification
-    transferCooldownSeconds: '604800', // 1 week
-    error: 'You need a MintPass NFT to post. Visit https://mintpass.org/request/{authorAddress}'
-  }
-};
-
-// Set on community
-community.settings.challenges = [challengeSettings];
-```
-
-### Directory Structure
-
-Your project should look like:
-```
-your-project/
-├── pkc-js/               # Your pkc-js fork
-└── mintpass/             # Cloned mintpass repo
-    └── challenge/
-        └── dist/
-            └── mintpass.js  # Built challenge file
-```
-
-### Challenge Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `chainTicker` | string | `"base"` | Chain where MintPass contract is deployed |
-| `contractAddress` | string | Optional on supported chains | If omitted and `chainTicker` is supported, defaults to the known MintPass deployment for that chain (e.g., Base Sepolia) |
-| `requiredTokenType` | string | `"0"` | Required token type (0=SMS, 1=Email, etc.) |
-| `transferCooldownSeconds` | string | `"604800"` | Cooldown period after NFT transfer (1 week) |
-| `error` | string | Default message | Custom error message for users without NFT |
-
-### Token Types
-
-- **Type 0**: SMS verification
-- **Type 1**: Email verification  
-- **Type 2+**: Future verification methods
-
-### Transfer Cooldown
-### Wallet selection and EVM fallback
-
-- When `chainTicker` is `"base"` or `"eth"`, the challenge first looks for `author.wallets[chainTicker]`.
-- If that specific wallet is missing, it automatically falls back between `base` and `eth` (e.g., `base → eth` or `eth → base`).
-- This makes EVM wallet usage robust when clients store a single EVM wallet entry.
-
-### Default contract addresses
-
-- If `contractAddress` is omitted and `chainTicker` is supported, the challenge uses a known default for that chain (e.g., Base Sepolia reference deployment).
-- You can still override `contractAddress` explicitly in settings.
-
-The challenge tracks when NFTs are used by different PKC accounts and enforces a cooldown period to prevent:
-- Quick transfers to bypass bans
-- NFT sharing between multiple accounts
-- Sybil attacks via NFT circulation
-
-## Development
-
-### Building
+If your RPC server is already running, first install the challenge on the server:
 
 ```bash
-cd challenge
-yarn install
-yarn build
+bitsocial challenge install @bitsocial/mintpass-challenge
 ```
 
-### Testing
+Then from your RPC client, connect and set the challenge on your community by name — no npm install or challenge registration needed on the client side:
 
-The challenge includes comprehensive automated testing that covers both the challenge logic and complete user publishing flow.
+```ts
+import PKC from "@pkcprotocol/pkc-js";
 
-#### Quick Start
-```bash
-cd challenge
-yarn test
-```
+const pkc = await PKC({
+  pkcRpcClientsOptions: ["ws://localhost:9138"]
+});
 
-This command automatically:
-- Starts a local Hardhat blockchain node
-- Deploys the MintPass contract
-- Runs the full integration test suite
-- Cleans up all processes when complete
+const community = await pkc.createCommunity({ address: "your-community-address.bso" });
 
-#### Manual Testing
-For situations where you need to manage the test infrastructure manually:
-
-```bash
-# Terminal 1: Start the Hardhat node
-cd contracts && yarn hardhat node
-
-# Terminal 2: Run tests against the running node
-cd challenge && yarn test:manual
-```
-
-#### Test Coverage
-The automated test suite includes:
-- **NFT Ownership Verification**: Tests both success and failure scenarios
-- **Complete Publishing Flow**: Simulates real user posting experience
-- **Local IPFS Integration**: Tests with isolated local IPFS daemon
-- **Challenge/Verification Exchange**: Validates complete challenge workflow
-
-For detailed testing information, see [AUTOMATED_TESTING.md](AUTOMATED_TESTING.md).
-
-### Integration with pkc-js
-
-The challenge exports a `ChallengeFileFactory` function compatible with pkc-js:
-
-```javascript
-// In your pkc-js fork
-import mintpass from '@bitsocial/mintpass-challenge';
-
-// Register the challenge
-PKC.challenges.mintpass = mintpass;
-
-// Use in community settings
-const community = await pkc.createCommunity({
+await community.edit({
   settings: {
-    challenges: [{
-      name: 'mintpass',
-      options: {
-        contractAddress: '0x...',
-        requiredTokenType: '0'
+    challenges: [
+      {
+        name: "mintpass",
+        options: {
+          chainTicker: "base",
+          contractAddress: "0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9",
+          requiredTokenType: "0",
+          transferCooldownSeconds: "604800"
+        }
       }
-    }]
+    ]
   }
 });
 ```
 
-## Architecture
+### With pkc-js (TypeScript)
 
-The challenge follows the pkc-js challenge pattern:
+Install the challenge package:
 
-1. **Wallet Verification**: Validates author's wallet signature
-2. **NFT Ownership Check**: Calls `ownsTokenType()` on MintPass contract
-3. **Transfer Cooldown**: Tracks NFT usage across PKC accounts
-4. **ENS Support**: Resolves ENS addresses to wallet addresses
+```bash
+npm install @bitsocial/mintpass-challenge
+```
 
-## Error Scenarios
+Register the challenge and configure your community:
 
-| Scenario | Error Message |
-|----------|---------------|
-| No wallet set | "Author wallet address is not defined" |
-| Invalid signature | "The signature of the wallet is invalid" |
-| No NFT owned | Custom error with link to verification site |
-| NFT in cooldown | "Your MintPass NFT is in cooldown period" |
-| Contract call fails | "Failed to check MintPass NFT ownership" |
+```typescript
+import PKC from '@pkcprotocol/pkc-js'
+import { mintpass } from '@bitsocial/mintpass-challenge'
 
-## License
+// Register the challenge so it can be referenced by name
+PKC.challenges['mintpass'] = mintpass
 
-MIT License - Same as the MintPass project. 
+const pkc = await PKC({ /* your pkc options */ })
+const community = await pkc.createCommunity({ address: 'your-community.bso' })
+
+await community.edit({
+  settings: {
+    challenges: [{
+      name: 'mintpass',
+      options: {
+        chainTicker: 'base',
+        contractAddress: '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9',
+        requiredTokenType: '0',
+        transferCooldownSeconds: '604800',
+      }
+    }]
+  }
+})
+```
+
+#### Challenge options
+
+All option values must be strings (pkc-js challenge convention).
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `chainTicker` | `"base"` | Chain where MintPass contract is deployed |
+| `contractAddress` | Known deployment per chain | If omitted and `chainTicker` is supported, defaults to the known MintPass deployment for that chain |
+| `requiredTokenType` | `"0"` | Required token type (0=SMS, 1=Email, 2+=future methods) |
+| `transferCooldownSeconds` | `"604800"` | Cooldown period after NFT transfer (1 week) |
+| `error` | Default message | Custom error message for users without NFT. Use `{authorAddress}` as a placeholder |
+
+### With bitsocial-cli
+
+Install the challenge package:
+
+```bash
+bitsocial challenge install @bitsocial/mintpass-challenge
+```
+
+Edit your community to use the challenge:
+
+```bash
+bitsocial community edit your-community.bso \
+  '--settings.challenges[0].name' mintpass \
+  '--settings.challenges[0].options.chainTicker' 'base' \
+  '--settings.challenges[0].options.contractAddress' '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9' \
+  '--settings.challenges[0].options.requiredTokenType' '0' \
+  '--settings.challenges[0].options.transferCooldownSeconds' '604800'
+```
+
+See the [bitsocial-cli documentation](https://github.com/bitsocial/bitsocial-cli) for full CLI reference.
+
+## Scripts
+
+```bash
+yarn build
+yarn test
+yarn clean
+```

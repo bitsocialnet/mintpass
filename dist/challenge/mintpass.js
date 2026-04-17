@@ -1,5 +1,5 @@
 import Logger from "@pkcprotocol/pkc-logger";
-const log = Logger("pkc-js:challenge:mintpass");
+const log = Logger("bitsocial:challenge:mintpass");
 /**
  * Extract the publication from a challenge request message.
  * This function checks known publication fields (comment, vote, commentEdit, etc.)

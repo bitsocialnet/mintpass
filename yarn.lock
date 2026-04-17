@@ -137,9 +137,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bitsocialnet/mintpass@workspace:.":
+"@bitsocial/mintpass@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@bitsocialnet/mintpass@workspace:."
+  resolution: "@bitsocial/mintpass@workspace:."
   dependencies:
     "@keyv/sqlite": "npm:4.0.8"
     "@pkcprotocol/pkc-js": "npm:0.0.16"
