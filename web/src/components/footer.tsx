@@ -12,7 +12,7 @@ export function Footer() {
             Terms
           </Link>
           <a
-            href="https://github.com/bitsocialnet/mintpass"
+            href="https://github.com/bitsocial/mintpass"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm md:text-base font-medium text-muted-foreground transition-colors hover:text-foreground/80"

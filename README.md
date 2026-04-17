@@ -65,6 +65,42 @@ mintpass/
 
 Community owners add the MintPass challenge to their community settings. When enabled, every publication (post, reply, vote) requires the author to hold a valid MintPass NFT. The challenge is published as [`@bitsocial/mintpass-challenge`](https://www.npmjs.com/package/@bitsocial/mintpass-challenge) on npm.
 
+### With pkc-js over RPC
+
+If your RPC server is already running, first install the challenge on the server:
+
+```bash
+bitsocial challenge install @bitsocial/mintpass-challenge
+```
+
+Then from your RPC client, connect and set the challenge on your community by name — no npm install or challenge registration needed on the client side:
+
+```ts
+import PKC from "@pkcprotocol/pkc-js";
+
+const pkc = await PKC({
+  pkcRpcClientsOptions: ["ws://localhost:9138"]
+});
+
+const community = await pkc.createCommunity({ address: "your-community-address.bso" });
+
+await community.edit({
+  settings: {
+    challenges: [
+      {
+        name: "mintpass",
+        options: {
+          chainTicker: "base",
+          contractAddress: "0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9",
+          requiredTokenType: "0",
+          transferCooldownSeconds: "604800"
+        }
+      }
+    ]
+  }
+});
+```
+
 ### With pkc-js (TypeScript)
 
 Install the challenge package:
@@ -135,7 +171,7 @@ bitsocial community edit your-community.bso \
   '--settings.challenges[0].options.transferCooldownSeconds' '604800'
 ```
 
-See the [bitsocial-cli documentation](https://github.com/bitsocialnet/bitsocial-cli) for full CLI reference.
+See the [bitsocial-cli documentation](https://github.com/bitsocial/bitsocial-cli) for full CLI reference.
 
 ## Where MintPass is useful
 

@@ -1,5 +1,5 @@
-import Logger from "@pkc/pkc-logger";
-const log = Logger("pkc-js:challenge:mintpass");
+import Logger from "@pkcprotocol/pkc-logger";
+const log = Logger("bitsocial:challenge:mintpass");
 /**
  * Extract the publication from a challenge request message.
  * This function checks known publication fields (comment, vote, commentEdit, etc.)
@@ -309,7 +309,7 @@ const verifyAuthorMintPass = async (props) => {
         error: props.error,
         rpcUrl: props.rpcUrl,
         bindToFirstAuthor: props.bindToFirstAuthor,
-        communityAddress: props.publication?.communityAddress
+        communityAddress: props.communityAddress
     });
     return mintPassValidationFailure;
 };
@@ -367,11 +367,14 @@ const validateMintPassOwnership = async (props) => {
             const tokenCacheKey = `${props.contractAddress}_${token.tokenId.toString()}`;
             const lastUsageRecord = await transferCooldownStore.get(tokenCacheKey);
             // Per-community binding key (bind to first author that uses this tokenId in this community)
-            const communityKeyPrefix = props.communityAddress ? `${props.communityAddress}_` : '';
-            const bindingKey = `${communityKeyPrefix}${tokenCacheKey}_binding`;
+            const bindingKey = `${props.communityAddress}_${tokenCacheKey}_binding`;
             const boundAuthor = await bindingsStore.get(bindingKey);
             // If token was never used, or was used by the same author, it's valid
             if (!lastUsageRecord || lastUsageRecord.authorAddress === props.authorAddress) {
+                // Check binding before any side effects
+                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
+                    return `This MintPass NFT is already bound to another author in this community.`;
+                }
                 hasValidToken = true;
                 // Update the cache with current usage
                 await transferCooldownStore.set(tokenCacheKey, {
@@ -381,16 +384,16 @@ const validateMintPassOwnership = async (props) => {
                 // Bind to first author if enabled
                 if (props.bindToFirstAuthor && !boundAuthor) {
                     await bindingsStore.set(bindingKey, props.authorAddress);
-                }
-                // If binding exists and mismatches, reject
-                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
-                    return `This MintPass NFT is already bound to another author in this community.`;
                 }
                 break;
             }
             // If token was used by different author, check cooldown
             const timeSinceLastUse = now - lastUsageRecord.timestamp;
             if (timeSinceLastUse >= props.transferCooldownSeconds) {
+                // Check binding before any side effects
+                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
+                    return `This MintPass NFT is already bound to another author in this community.`;
+                }
                 hasValidToken = true;
                 // Update the cache with current usage
                 await transferCooldownStore.set(tokenCacheKey, {
@@ -400,9 +403,6 @@ const validateMintPassOwnership = async (props) => {
                 // Bind to first author if enabled
                 if (props.bindToFirstAuthor && !boundAuthor) {
                     await bindingsStore.set(bindingKey, props.authorAddress);
-                }
-                if (props.bindToFirstAuthor && boundAuthor && boundAuthor !== props.authorAddress) {
-                    return `This MintPass NFT is already bound to another author in this community.`;
                 }
                 break;
             }
@@ -455,6 +455,10 @@ const getChallenge = async ({ challengeSettings, challengeRequestMessage, commun
         };
     }
     const authorWalletAddress = getAuthorWalletAddress(publication);
+    const communityAddress = community?.address;
+    if (typeof communityAddress !== "string" || !communityAddress) {
+        throw Error("community.address is required for challenge verification");
+    }
     const sharedProps = {
         publication,
         chainTicker,
@@ -463,7 +467,8 @@ const getChallenge = async ({ challengeSettings, challengeRequestMessage, commun
         transferCooldownSeconds: cooldownSeconds,
         error: error || `You need a MintPass NFT to post in this community. Visit https://mintpass.org/request/${authorWalletAddress} to get verified.`,
         rpcUrl,
-        bindToFirstAuthor: String(bindToFirstAuthor).toLowerCase() === 'true' || String(bindToFirstAuthor) === '1'
+        bindToFirstAuthor: String(bindToFirstAuthor).toLowerCase() === 'true' || String(bindToFirstAuthor) === '1',
+        communityAddress
     };
     // Single-path verification using ETH wallet only
     const firstFailure = await verifyAuthorMintPass(sharedProps);

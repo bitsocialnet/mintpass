@@ -4,15 +4,19 @@ import type {
     ChallengeResultInput,
     GetChallengeArgsInput,
     CommunityChallengeSetting
-} from "@pkcprotocol/pkc-js/dist/node/challenges";
-import type {
-    PublicationWithCommunityAuthorFromDecryptedChallengeRequest,
-    DecryptedChallengeRequestMessageTypeWithCommunityAuthor
-} from "@pkcprotocol/pkc-js/dist/node/pubsub-messages/types";
-import type { PKC } from "@pkcprotocol/pkc-js/dist/node/pkc/pkc";
-import Logger from "@pkc/pkc-logger";
+} from "@pkcprotocol/pkc-js/challenges";
+import Logger from "@pkcprotocol/pkc-logger";
 
-const log = Logger("pkc-js:challenge:mintpass");
+type DecryptedChallengeRequestMessageTypeWithCommunityAuthor = GetChallengeArgsInput['challengeRequestMessage'];
+type PublicationWithCommunityAuthorFromDecryptedChallengeRequest = NonNullable<
+    DecryptedChallengeRequestMessageTypeWithCommunityAuthor['vote'] |
+    DecryptedChallengeRequestMessageTypeWithCommunityAuthor['comment'] |
+    DecryptedChallengeRequestMessageTypeWithCommunityAuthor['commentEdit'] |
+    DecryptedChallengeRequestMessageTypeWithCommunityAuthor['commentModeration'] |
+    DecryptedChallengeRequestMessageTypeWithCommunityAuthor['communityEdit']
+>;
+
+const log = Logger("bitsocial:challenge:mintpass");
 
 /**
  * Extract the publication from a challenge request message.
