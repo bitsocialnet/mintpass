@@ -33,7 +33,7 @@
     "ethers": "6.13.4",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.543.0",
-    "next": "16.2.0",
+    "next": "16.2.3",
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -49,7 +49,7 @@
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.39.2",
-    "eslint-config-next": "16.2.0",
+    "eslint-config-next": "16.2.3",
     "portless": "0.7.0",
     "postcss": "^8.5.6",
     "react-doctor": "0.0.31",
@@ -58,9 +58,17 @@
   },
   "packageManager": "yarn@4.13.0",
   "resolutions": {
+    "brace-expansion@npm:^1.1.7": "1.1.13",
+    "flatted@npm:^3.2.9": "3.4.2",
     "js-yaml": ">=4.1.1",
     "minimatch@npm:^3.1.2": "3.1.4",
     "minimatch@npm:^9.0.4": "9.0.7",
-    "minimatch@npm:*": "10.2.4"
+    "minimatch@npm:*": "10.2.4",
+    "picomatch@npm:^2.0.4": "2.3.2",
+    "picomatch@npm:^2.2.1": "2.3.2",
+    "picomatch@npm:^2.3.1": "2.3.2",
+    "picomatch@npm:^4.0.1": "4.0.4",
+    "picomatch@npm:^4.0.2": "4.0.4",
+    "picomatch@npm:^4.0.3": "4.0.4"
   }
 }
