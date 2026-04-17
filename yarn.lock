@@ -86,26 +86,24 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bitsocial/mintpass-challenge@workspace:challenge"
   dependencies:
-    "@keyv/sqlite": "npm:^4.0.5"
-    "@pkcprotocol/pkc-js": "git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c"
+    "@keyv/sqlite": "npm:4.0.8"
+    "@pkcprotocol/pkc-js": "npm:0.0.16"
     "@pkcprotocol/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
     "@types/chai": "npm:^4.2.0"
     "@types/mocha": "npm:^10.0.10"
     "@types/node": "npm:^22.7.8"
     chai: "npm:^4.2.0"
     conventional-changelog-cli: "npm:^5.0.0"
-    env-paths: "npm:^3.0.0"
+    env-paths: "npm:4.0.0"
     ethers: "npm:6.16.0"
     hardhat: "npm:^2.28.6"
-    keyv: "npm:5.5.0"
+    keyv: "npm:5.6.0"
     kubo: "npm:0.36.0"
     multiformats: "npm:^13.1.0"
     tempy: "npm:^3.1.0"
-    typescript: "npm:^6.0.2"
+    typescript: "npm:6.0.3"
     uint8arrays: "npm:^4.0.3"
     viem: "npm:2.45.0"
-  peerDependencies:
-    "@pkcprotocol/pkc-js": ">=0.0.0"
   languageName: unknown
   linkType: soft
 
@@ -143,11 +141,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bitsocialnet/mintpass@workspace:."
   dependencies:
-    "@keyv/sqlite": "npm:^4.0.5"
-    "@pkcprotocol/pkc-js": "git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c"
-    env-paths: "npm:^3.0.0"
-    keyv: "npm:5.5.0"
-    typescript: "npm:^6.0.2"
+    "@keyv/sqlite": "npm:4.0.8"
+    "@pkcprotocol/pkc-js": "npm:0.0.16"
+    env-paths: "npm:4.0.0"
+    keyv: "npm:5.6.0"
+    typescript: "npm:6.0.3"
     viem: "npm:2.45.0"
   languageName: unknown
   linkType: soft
@@ -1056,14 +1054,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@keyv/serialize@npm:^1.1.0":
+"@keyv/serialize@npm:^1.1.1":
   version: 1.1.1
   resolution: "@keyv/serialize@npm:1.1.1"
   checksum: 10c0/b0008cae4a54400c3abf587b8cc2474c6f528ee58969ce6cf9cb07a04006f80c73c85971d6be6544408318a2bc40108236a19a82aea0a6de95aae49533317374
   languageName: node
   linkType: hard
 
-"@keyv/sqlite@npm:^4.0.5":
+"@keyv/sqlite@npm:4.0.8":
   version: 4.0.8
   resolution: "@keyv/sqlite@npm:4.0.8"
   dependencies:
@@ -2455,29 +2453,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pkc/pkc-logger@github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a":
-  version: 0.0.1
-  resolution: "@pkc/pkc-logger@https://github.com/pkcprotocol/pkc-logger.git#commit=cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
-  dependencies:
-    debug: "npm:4.4.3"
-  checksum: 10c0/7ee44c03de81f87ecbfa104d8db829f692cad8454de2325812af585369d3d637446bace809e82722bd610254b5c82bc3aca99586a8d9b0531ae6dd88194b68d3
-  languageName: node
-  linkType: hard
-
-"@pkc/proper-lock-file@git+https://github.com/pkcprotocol/node-proper-lockfile.git#30564d7e0bd06d145c88a16896c779e97503a735":
-  version: 4.1.2
-  resolution: "@pkc/proper-lock-file@https://github.com/pkcprotocol/node-proper-lockfile.git#commit=30564d7e0bd06d145c88a16896c779e97503a735"
-  dependencies:
-    graceful-fs: "npm:4.2.11"
-    retry: "npm:0.13.1"
-    signal-exit: "npm:4.1.0"
-  checksum: 10c0/ed62d947029ba348c38ac34de20f2497e01302eff0325ea69f50d1225f0e76782067386f3f4d17b783d748536390409e8cbbcc2b312570b32c1c08fc37307b0b
-  languageName: node
-  linkType: hard
-
-"@pkcprotocol/pkc-js@git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c":
-  version: 0.0.11
-  resolution: "@pkcprotocol/pkc-js@https://github.com/pkcprotocol/pkc-js.git#commit=676822a0b9a8245aae65c0f131c9deb9ac6fc40c"
+"@pkcprotocol/pkc-js@npm:0.0.16":
+  version: 0.0.16
+  resolution: "@pkcprotocol/pkc-js@npm:0.0.16"
   dependencies:
     "@enhances/with-resolvers": "npm:0.0.5"
     "@helia/block-brokers": "npm:5.1.2"
@@ -2492,8 +2470,8 @@ __metadata:
     "@libp2p/peer-id": "npm:6.0.4"
     "@libp2p/peer-id-factory": "npm:4.2.4"
     "@libp2p/websockets": "npm:10.1.3"
-    "@pkc/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
-    "@pkc/proper-lock-file": "git+https://github.com/pkcprotocol/node-proper-lockfile.git#30564d7e0bd06d145c88a16896c779e97503a735"
+    "@pkcprotocol/pkc-logger": "github:pkcprotocol/pkc-logger#cb494fbaf332ed5b2cfd9d9d0f90ca7fd0058b4a"
+    "@pkcprotocol/proper-lock-file": "git+https://github.com/pkcprotocol/node-proper-lockfile.git#30564d7e0bd06d145c88a16896c779e97503a735"
     assert: "npm:2.1.0"
     better-sqlite3: "npm:12.6.2"
     blockstore-core: "npm:6.1.2"
@@ -2507,7 +2485,6 @@ __metadata:
     helia: "npm:6.0.20"
     hpagent: "npm:1.2.0"
     it-all: "npm:3.0.6"
-    jose: "npm:4.11.0"
     js-sha256: "npm:0.11.1"
     js-sha512: "npm:0.9.0"
     kubo-rpc-client: "npm:6.1.0"
@@ -2532,7 +2509,7 @@ __metadata:
     typestub-ipfs-only-hash: "npm:4.0.0"
     uuid: "npm:13.0.0"
     zod: "npm:4.3.6"
-  checksum: 10c0/522ed96759ec79f994234ea29ad60c41d4b26f18eecd4efcabd67487ca5e822d5dde7b5aae168b614d175f4d00cf436388509b7b79c9fcd57b1119ad59841f97
+  checksum: 10c0/8b82ba3f9e3448155d0c004301ceb4abed9a179d9b0a73b56859b8a29f6551fed6cb1fc798fe4cdf0e26f1b47e5eb5028d7d9cb293211316baf9ead42c890457
   languageName: node
   linkType: hard
 
@@ -2542,6 +2519,17 @@ __metadata:
   dependencies:
     debug: "npm:4.4.3"
   checksum: 10c0/1729428ebdc977885dce554893894e7187fb460986119201fddc72e600a0ec07fb61129d884528a9feae83e05cdc71f7889c32d46d12f3292ce6765a96e927ef
+  languageName: node
+  linkType: hard
+
+"@pkcprotocol/proper-lock-file@git+https://github.com/pkcprotocol/node-proper-lockfile.git#30564d7e0bd06d145c88a16896c779e97503a735":
+  version: 4.1.2
+  resolution: "@pkcprotocol/proper-lock-file@https://github.com/pkcprotocol/node-proper-lockfile.git#commit=30564d7e0bd06d145c88a16896c779e97503a735"
+  dependencies:
+    graceful-fs: "npm:4.2.11"
+    retry: "npm:0.13.1"
+    signal-exit: "npm:4.1.0"
+  checksum: 10c0/0cd90d63f98b9863412073a4339d3bd3b9b4bd09573ec0b58ede1ce962ba361a805354f034734ac73f24e134920aaa9725bc6c358bde6dd5e256497fac7028ae
   languageName: node
   linkType: hard
 
@@ -5429,17 +5417,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"env-paths@npm:4.0.0":
+  version: 4.0.0
+  resolution: "env-paths@npm:4.0.0"
+  dependencies:
+    is-safe-filename: "npm:^0.1.0"
+  checksum: 10c0/13ee7fa4047786ca28f1fbf2239606f8a53304bdf71bfc426e95f806e429060181205316f2c45b4ac560e81c854ded5a45fd9dc3105414c01d504b3469a1294b
+  languageName: node
+  linkType: hard
+
 "env-paths@npm:^2.2.0":
   version: 2.2.1
   resolution: "env-paths@npm:2.2.1"
   checksum: 10c0/285325677bf00e30845e330eec32894f5105529db97496ee3f598478e50f008c5352a41a30e5e72ec9de8a542b5a570b85699cd63bd2bc646dbcb9f311d83bc4
-  languageName: node
-  linkType: hard
-
-"env-paths@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "env-paths@npm:3.0.0"
-  checksum: 10c0/76dec878cee47f841103bacd7fae03283af16f0702dad65102ef0a556f310b98a377885e0f32943831eb08b5ab37842a323d02529f3dfd5d0a40ca71b01b435f
   languageName: node
   linkType: hard
 
@@ -7505,6 +7495,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-safe-filename@npm:^0.1.0":
+  version: 0.1.1
+  resolution: "is-safe-filename@npm:0.1.1"
+  checksum: 10c0/45c35d2253b96348e2c26590e14feed51d1e6b72aaa567930ccb34e68c0eef00ebcf3b7e01b46bf45e578a27355cd8f5bc12f7d6d79a34d33dc93d4560c0f6b6
+  languageName: node
+  linkType: hard
+
 "is-stream@npm:^2.0.0":
   version: 2.0.1
   resolution: "is-stream@npm:2.0.1"
@@ -7938,13 +7935,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jose@npm:4.15.9":
-  version: 4.15.9
-  resolution: "jose@npm:4.15.9"
-  checksum: 10c0/4ed4ddf4a029db04bd167f2215f65d7245e4dc5f36d7ac3c0126aab38d66309a9e692f52df88975d99429e357e5fd8bab340ff20baab544d17684dd1d940a0f4
-  languageName: node
-  linkType: hard
-
 "js-sha256@npm:0.11.1":
   version: 0.11.1
   resolution: "js-sha256@npm:0.11.1"
@@ -8103,12 +8093,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"keyv@npm:5.5.0":
-  version: 5.5.0
-  resolution: "keyv@npm:5.5.0"
+"keyv@npm:5.6.0":
+  version: 5.6.0
+  resolution: "keyv@npm:5.6.0"
   dependencies:
-    "@keyv/serialize": "npm:^1.1.0"
-  checksum: 10c0/2db63fd2abcdf71929f032569673b6edd0de111edb012411658e2589dc5f49793a98aecd56c67fafda3f90a31f32e35555a97f8621040728260c66ad8daeea48
+    "@keyv/serialize": "npm:^1.1.1"
+  checksum: 10c0/c3ea795b6e03593ca57c8f70928a69bad14c13389a7fb75649a115ff55615244b04d8902798d841c17f0bb4a8a8866c97133b543b93f151b440170bba09176db
   languageName: node
   linkType: hard
 
@@ -12003,7 +11993,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:>=6.0.2, typescript@npm:^6.0.2":
+"typescript@npm:6.0.3":
+  version: 6.0.3
+  resolution: "typescript@npm:6.0.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10c0/4a25ff5045b984370f48f196b3a0120779b1b343d40b9a68d114ea5e5fff099809b2bb777576991a63a5cd59cf7bffd96ff6fe10afcefbcb8bd6fb96ad4b6606
+  languageName: node
+  linkType: hard
+
+"typescript@npm:>=6.0.2":
   version: 6.0.2
   resolution: "typescript@npm:6.0.2"
   bin:
@@ -12013,7 +12013,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A>=6.0.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^6.0.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A6.0.3#optional!builtin<compat/typescript>":
+  version: 6.0.3
+  resolution: "typescript@patch:typescript@npm%3A6.0.3#optional!builtin<compat/typescript>::version=6.0.3&hash=5786d5"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10c0/2f25c74e65663c248fa1ade2b8459d9ce5372ff9dad07067310f132966ebec1d93f6c42f0baf77a6b6a7a91460463f708e6887013aaade22111037457c6b25df
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A>=6.0.2#optional!builtin<compat/typescript>":
   version: 6.0.2
   resolution: "typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>::version=6.0.2&hash=5786d5"
   bin:

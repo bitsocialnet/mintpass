@@ -1,4 +1,4 @@
-import Logger from "@pkc/pkc-logger";
+import Logger from "@pkcprotocol/pkc-logger";
 const log = Logger("pkc-js:challenge:mintpass");
 /**
  * Extract the publication from a challenge request message.

@@ -43,14 +43,14 @@
     "ethereum"
   ],
   "dependencies": {
-    "@keyv/sqlite": "^4.0.5",
-    "@pkcprotocol/pkc-js": "git+https://github.com/pkcprotocol/pkc-js.git#676822a0b9a8245aae65c0f131c9deb9ac6fc40c",
-    "env-paths": "^3.0.0",
-    "keyv": "5.5.0",
+    "@keyv/sqlite": "4.0.8",
+    "@pkcprotocol/pkc-js": "0.0.16",
+    "env-paths": "4.0.0",
+    "keyv": "5.6.0",
     "viem": "2.45.0"
   },
   "devDependencies": {
-    "typescript": "^6.0.2"
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": ">=22.0.0",

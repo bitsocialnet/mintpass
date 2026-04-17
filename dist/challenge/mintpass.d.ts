@@ -1,4 +1,4 @@
-import type { ChallengeFileInput, CommunityChallengeSetting } from "@pkcprotocol/pkc-js/dist/node/challenges";
+import type { ChallengeFileInput, CommunityChallengeSetting } from "@pkcprotocol/pkc-js/challenges";
 /**
  * Challenge file factory function
  */
