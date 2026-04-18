@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "portless mintpass next dev --turbopack",
+    "dev": "node scripts/start-dev.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
