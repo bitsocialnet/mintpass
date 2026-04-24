@@ -134,7 +134,7 @@ export const pkcJsChallenges = {
 
 ```javascript
 const challengeSettings = {
-  name: 'mintpass',
+  name: '@bitsocial/mintpass-challenge',
   options: {
     chainTicker: 'base',
     contractAddress: '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9', // Base Sepolia

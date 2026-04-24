@@ -88,7 +88,7 @@ await community.edit({
   settings: {
     challenges: [
       {
-        name: "mintpass",
+        name: "@bitsocial/mintpass-challenge",
         options: {
           chainTicker: "base",
           contractAddress: "0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9",
@@ -116,7 +116,7 @@ import PKC from '@pkcprotocol/pkc-js'
 import mintpassChallenge from '@bitsocial/mintpass-challenge'
 
 // Register the challenge so it can be referenced by name
-PKC.challenges['mintpass'] = mintpassChallenge
+PKC.challenges['@bitsocial/mintpass-challenge'] = mintpassChallenge
 
 const pkc = await PKC({ /* your pkc options */ })
 const community = await pkc.createCommunity({ address: 'your-community.bso' })
@@ -124,7 +124,7 @@ const community = await pkc.createCommunity({ address: 'your-community.bso' })
 await community.edit({
   settings: {
     challenges: [{
-      name: 'mintpass',
+      name: '@bitsocial/mintpass-challenge',
       options: {
         chainTicker: 'base',
         contractAddress: '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9',
@@ -163,7 +163,7 @@ Edit your community to use the challenge:
 
 ```bash
 bitsocial community edit your-community.bso \
-  '--settings.challenges[0].name' mintpass \
+  '--settings.challenges[0].name' @bitsocial/mintpass-challenge \
   '--settings.challenges[0].options.chainTicker' base \
   '--settings.challenges[0].options.contractAddress' '0x13d41d6B8EA5C86096bb7a94C3557FCF184491b9' \
   '--settings.challenges[0].options.requiredTokenType' '0' \
