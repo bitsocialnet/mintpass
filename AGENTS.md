@@ -183,6 +183,14 @@ Use these when applicable (they are available in this repo setup):
 - `playwright-cli`: browser automation and UI validation
 - `commit-format`: standardize Conventional Commit message output
 - `issue-format`: standardize GitHub issue title/description output
+- `impeccable`: design, redesign, critique, audit, polish, layout, typography, color, motion, or visual hierarchy work for `web/` (one `/impeccable` entry point with 23 design subcommands)
+
+## AI Tooling Rules
+
+- Treat `.codex/`, `.cursor/`, and `.claude/` as repo-managed contributor tooling, not private scratch space.
+- Keep equivalent workflow files aligned across all toolchains when their directories contain the same skill, hook, or agent.
+- When changing shared agent behavior, update the relevant files in `.codex/skills/`, `.cursor/skills/`, `.claude/skills/`, `.codex/agents/`, `.cursor/agents/`, `.claude/agents/`, `.codex/hooks/`, `.cursor/hooks/`, `.claude/hooks/`, and their `hooks.json` or `config.toml` entry points as needed.
+- If `AGENTS.md` references a skill, agent, or hook, prefer a tracked file under `.codex/`, `.cursor/`, or `.claude/` rather than an untracked local-only instruction.
 
 ## AI Agent Hooks
 

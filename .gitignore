@@ -74,5 +74,29 @@ deployments/local/
 .coverage_contracts/
 
 .pkc
-.cursor
-.codex
+
+# Repo-managed AI tooling
+.cursor/*
+.cursor/.DS_Store
+!.cursor/agents/
+!.cursor/agents/**
+!.cursor/hooks/
+!.cursor/hooks/**
+!.cursor/hooks.json
+!.cursor/skills/
+!.cursor/skills/**
+.cursor/**/.DS_Store
+
+.codex/*
+.codex/.DS_Store
+!.codex/agents/
+!.codex/agents/**
+!.codex/config.toml
+!.codex/hooks/
+!.codex/hooks/**
+!.codex/hooks.json
+!.codex/skills/
+!.codex/skills/**
+.codex/**/.DS_Store
+
+/.claude/worktrees
