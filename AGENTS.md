@@ -9,6 +9,14 @@ MintPass is a multi-part authentication system for Bitsocial and other decentral
 
 This is not a single app repo. Treat it as a coordinated multi-project codebase.
 
+## Agent Operating Principles
+
+- Before editing, state important assumptions when the task is ambiguous. Ask instead of silently choosing between materially different interpretations.
+- Prefer the smallest implementation that solves the requested problem. Do not add speculative abstractions, configurability, or features.
+- Keep diffs surgical. Do not refactor, reformat, rename, or "improve" adjacent code unless it is necessary for the task.
+- Clean up only artifacts created by the current change, such as newly unused imports or dead helper code.
+- For non-trivial work, define success criteria and verify them with the narrowest reliable checks before marking the task complete.
+
 ## Repository Shape (Critical)
 
 ```text
