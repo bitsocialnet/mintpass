@@ -17,6 +17,13 @@ const portlessBin = path.join(binDir, `portless${executableSuffix}`);
 const appName = "mintpass";
 const canonicalBranches = new Set(["main", "master"]);
 const usePortless = process.env.PORTLESS !== "0" && !isWindows && existsSync(portlessBin);
+const portlessProxyPort = process.env.PORTLESS_PORT || "443";
+const portlessEnv = {
+  ...process.env,
+  PORTLESS_PORT: portlessProxyPort,
+  PORTLESS_HTTPS: process.env.PORTLESS_HTTPS ?? "1",
+  PORTLESS_LAN: process.env.PORTLESS_LAN ?? "0",
+};
 
 function sanitizeLabel(value) {
   return value
@@ -52,6 +59,22 @@ function getPortlessAppName() {
   return `${label}.${appName}`;
 }
 
+function ensurePortlessProxy() {
+  const result = spawnSync(portlessBin, ["proxy", "start", "--port", portlessProxyPort, "--https"], {
+    cwd: webRoot,
+    env: portlessEnv,
+    stdio: "inherit",
+  });
+
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+if (usePortless) {
+  ensurePortlessProxy();
+}
+
 const portlessAppName = getPortlessAppName();
 const publicUrl = usePortless ? `https://${portlessAppName}.localhost` : null;
 const command = usePortless ? portlessBin : "next";
@@ -62,7 +85,7 @@ const args = usePortless
 const child = spawn(command, args, {
   cwd: webRoot,
   stdio: "inherit",
-  env: process.env,
+  env: usePortless ? portlessEnv : process.env,
 });
 
 if (publicUrl && process.env.BROWSER !== "none") {
