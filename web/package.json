@@ -50,7 +50,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.2.3",
-    "portless": "0.7.0",
+    "portless": "0.11.1",
     "postcss": "^8.5.6",
     "react-doctor": "0.0.31",
     "tailwindcss": "^3.4.19",

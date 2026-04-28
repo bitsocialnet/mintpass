@@ -87,10 +87,10 @@ Requires [Portless](https://github.com/vercel-labs/portless), installed with pro
 ```bash
 corepack enable
 corepack yarn install
-corepack yarn dev         # http://mintpass.localhost:1355
+corepack yarn dev         # https://mintpass.localhost
 ```
 
-The dev server runs at http://mintpass.localhost:1355 via [Portless](https://port1355.dev/), which gives each Bitsocial project a stable, named URL instead of a random port. To bypass Portless: `PORTLESS=0 yarn dev`
+The dev server runs at https://mintpass.localhost via [Portless](https://github.com/vercel-labs/portless), which gives each Bitsocial project a stable, named URL instead of a random port. To bypass Portless: `PORTLESS=0 yarn dev`
 
 To test API calls locally, use `curl` or your preferred REST client.
 

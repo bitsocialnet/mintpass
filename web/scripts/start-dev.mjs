@@ -2,7 +2,8 @@
 
 import { existsSync } from "node:fs";
 import { spawn, spawnSync } from "node:child_process";
-import { get } from "node:http";
+import { get as httpGet } from "node:http";
+import { get as httpsGet } from "node:https";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -38,27 +39,24 @@ function getCurrentBranch() {
   return result.stdout.trim() || null;
 }
 
-function getPublicUrl() {
-  if (!usePortless) {
-    return null;
-  }
-
+function getPortlessAppName() {
   const branch = getCurrentBranch();
 
   if (!branch || canonicalBranches.has(branch)) {
-    return `http://${appName}.localhost:1355`;
+    return appName;
   }
 
   const lastSegment = branch.split("/").pop() ?? branch;
   const label = sanitizeLabel(lastSegment);
 
-  return `http://${label}.${appName}.localhost:1355`;
+  return `${label}.${appName}`;
 }
 
-const publicUrl = getPublicUrl();
+const portlessAppName = getPortlessAppName();
+const publicUrl = usePortless ? `https://${portlessAppName}.localhost` : null;
 const command = usePortless ? portlessBin : "next";
 const args = usePortless
-  ? ["run", "--name", appName, "next", "dev", "--turbopack"]
+  ? [portlessAppName, "next", "dev", "--turbopack"]
   : ["dev", "--turbopack"];
 
 const child = spawn(command, args, {
@@ -68,7 +66,7 @@ const child = spawn(command, args, {
 });
 
 if (publicUrl && process.env.BROWSER !== "none") {
-  waitForHttpReady(publicUrl, 30_000)
+  waitForUrlReady(publicUrl, 30_000)
     .then(() => {
       console.log(`Opening ${publicUrl} in browser...`);
       openInBrowser(publicUrl);
@@ -87,16 +85,22 @@ child.on("exit", (code, signal) => {
   process.exit(code ?? 0);
 });
 
-async function waitForHttpReady(url, timeoutMs) {
+async function waitForUrlReady(url, timeoutMs) {
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < timeoutMs) {
     const ready = await new Promise((resolve) => {
-      const request = get(url, (response) => {
+      const parsedUrl = new URL(url);
+      const getUrl = parsedUrl.protocol === "https:" ? httpsGet : httpGet;
+      const onResponse = (response) => {
         response.resume();
         const statusCode = response.statusCode ?? 500;
         resolve(statusCode >= 200 && statusCode < 400);
-      });
+      };
+      const request =
+        parsedUrl.protocol === "https:"
+          ? getUrl(parsedUrl, { rejectUnauthorized: false }, onResponse)
+          : getUrl(parsedUrl, onResponse);
 
       request.on("error", () => resolve(false));
       request.setTimeout(2_000, () => {

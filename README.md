@@ -59,7 +59,7 @@ mintpass/
 
 - Contracts: `cd contracts && yarn install && yarn test`
 - Challenge: `cd challenge && yarn install && yarn test`
-- Web: `cd web && yarn install && yarn dev` then open `http://mintpass.localhost:1355/request`
+- Web: `cd web && yarn install && yarn dev` then open `https://mintpass.localhost/request`
 
 ## Using MintPass in your community
 
