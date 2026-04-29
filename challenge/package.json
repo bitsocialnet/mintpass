@@ -1,6 +1,6 @@
 {
   "name": "@bitsocial/mintpass-challenge",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "MintPass pkc-js challenge implementation",
   "type": "module",
   "main": "dist/index.js",
@@ -63,7 +63,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bitsocial/mintpass",
+    "url": "https://github.com/bitsocialnet/mintpass",
     "directory": "challenge"
   },
   "packageManager": "yarn@4.13.0"
