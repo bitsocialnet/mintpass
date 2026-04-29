@@ -241,12 +241,85 @@ describe("MintPass Challenge Integration Test", function () {
 
       // Wait for challengeverification
       await waitForCondition({}, () => challengeVerificationReceived, 30000);
-      
+
             // Expect proper NFT ownership verification failure
       expect(challengeSuccessValue).to.be.false;
       expect(challengeErrorsValue['0']).to.include('You need a MintPass NFT');
       console.log("✅ Test 1 PASSED: challengeSuccess = false (correctly failed without NFT)");
-      
+
+    } finally {
+      await community.stop();
+      await community.delete();
+      console.log("🧹 Community cleaned up");
+    }
+  });
+
+  it("Test 1b: noChallengeUrl=true should fail immediately without iframe when author has no NFT", async function () {
+    this.timeout(120000);
+    console.log("\n🧪 Test 1b: noChallengeUrl=true should fail immediately without iframe when author has no NFT");
+
+    const authorSigner = await pkcForPublishing.createSigner();
+    const ethWallet = await getEthWalletFromPrivateKey(authorSigner.privateKey, authorSigner.address, authorSigner.publicKey);
+    console.log(`👤 Author PKC address: ${authorSigner.address}`);
+    console.log(`💳 Author ETH address: ${ethWallet.address}`);
+
+    const hasNFT = await mintpass.ownsTokenType(ethWallet.address, SMS_TOKEN_TYPE);
+    expect(hasNFT).to.be.false;
+
+    const community = await pkc.createCommunity({
+      title: 'MintPass Test Community noChallengeUrl',
+      description: 'Testing mintpass challenge with noChallengeUrl=true'
+    });
+
+    const settings = { ...community.settings };
+    const challengeSettings = createChallengeSettings(await mintpass.getAddress(), chainProviderUrl, 31337);
+    challengeSettings.options.noChallengeUrl = 'true';
+    settings.challenges = [challengeSettings];
+    await community.edit({ settings });
+
+    await community.start();
+    await waitForCondition(community, (s) => typeof s.updatedAt === "number");
+
+    try {
+      const comment = await pkcForPublishing.createComment({
+        signer: authorSigner,
+        communityAddress: community.address,
+        title: 'Test comment without NFT (noChallengeUrl)',
+        content: 'This comment should fail immediately',
+        author: {
+          wallets: {
+            eth: ethWallet
+          }
+        }
+      });
+
+      let challengeVerificationReceived = false;
+      let challengeSuccessValue = null;
+      let challengeErrorsValue = null;
+      let challengeEventReceived = false;
+
+      comment.on('challengeverification', (challengeVerification) => {
+        console.log('✅ challengeverification received:', challengeVerification);
+        challengeSuccessValue = challengeVerification.challengeSuccess;
+        challengeErrorsValue = challengeVerification.challengeErrors;
+        challengeVerificationReceived = true;
+      });
+
+      comment.on('challenge', (challenge) => {
+        console.log("⚠️ unexpected challenge event received:", challenge);
+        challengeEventReceived = true;
+      });
+
+      console.log("📤 Publishing comment...");
+      await comment.publish();
+
+      await waitForCondition({}, () => challengeVerificationReceived, 30000);
+
+      expect(challengeEventReceived, 'challenge iframe should not be presented when noChallengeUrl=true').to.be.false;
+      expect(challengeSuccessValue).to.be.false;
+      expect(challengeErrorsValue['0']).to.include('You need a MintPass NFT');
+      console.log("✅ Test 1b PASSED: immediate failure without iframe");
+
     } finally {
       await community.stop();
       await community.delete();

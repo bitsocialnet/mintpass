@@ -73,6 +73,13 @@ const optionInputs = [
         placeholder: "true"
     },
     {
+        option: "noChallengeUrl",
+        label: "No Challenge URL (immediate failure if NFT missing)",
+        default: "false",
+        description: "When enabled, authors without the required MintPass NFT fail immediately instead of being shown the mintpass.org verification iframe.",
+        placeholder: "false"
+    },
+    {
         option: "transferCooldownSeconds",
         label: "Transfer Cooldown (seconds)",
         default: "604800", // 1 week
@@ -433,7 +440,8 @@ const getAuthorWalletAddress = (publication) => {
  */
 const getChallenge = async ({ challengeSettings, challengeRequestMessage, community }) => {
     const { chainTicker = "base", contractAddress, requiredTokenType = "0", transferCooldownSeconds = "604800", // 1 week default
-    error, rpcUrl, bindToFirstAuthor = "true" } = challengeSettings?.options || {};
+    error, rpcUrl, bindToFirstAuthor = "true", noChallengeUrl = "false" } = challengeSettings?.options || {};
+    const noChallengeUrlBool = String(noChallengeUrl).toLowerCase() === 'true' || String(noChallengeUrl) === '1';
     // Apply sensible default contract address for supported chains if not provided
     const effectiveContractAddress = contractAddress || DEFAULT_CONTRACTS[chainTicker];
     if (!effectiveContractAddress) {
@@ -477,7 +485,7 @@ const getChallenge = async ({ challengeSettings, challengeRequestMessage, commun
     // If the only reason of failure is missing NFT ownership, present iframe challenge instead of failing immediately.
     const ownershipError = (sharedProps.error || '').replace("{authorAddress}", authorWalletAddress);
     const failedDueToMissingNFT = (firstFailure === ownershipError);
-    if (failedDueToMissingNFT) {
+    if (failedDueToMissingNFT && !noChallengeUrlBool) {
         // Return a Challenge requiring an answer. The answer can be an empty string "".
         // On verify, re-check NFT ownership and return the up-to-date result.
         const challenge = `https://mintpass.org/request/${authorWalletAddress}?hide-nft=true&hide-address=true`;

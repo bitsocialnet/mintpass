@@ -97,7 +97,14 @@ const optionInputs = <NonNullable<ChallengeFileInput["optionInputs"]>>[
         description: "When enabled, the first author that uses a token in this sub gets bound to that tokenId; subsequent different authors are rejected.",
         placeholder: "true"
     },
-    
+    {
+        option: "noChallengeUrl",
+        label: "No Challenge URL (immediate failure if NFT missing)",
+        default: "false",
+        description: "When enabled, authors without the required MintPass NFT fail immediately instead of being shown the mintpass.org verification iframe.",
+        placeholder: "false"
+    },
+
     {
         option: "transferCooldownSeconds",
         label: "Transfer Cooldown (seconds)",
@@ -540,8 +547,11 @@ const getChallenge = async ({
         transferCooldownSeconds = "604800", // 1 week default
         error,
         rpcUrl,
-        bindToFirstAuthor = "true"
+        bindToFirstAuthor = "true",
+        noChallengeUrl = "false"
     } = challengeSettings?.options || {};
+
+    const noChallengeUrlBool = String(noChallengeUrl).toLowerCase() === 'true' || String(noChallengeUrl) === '1';
     
     // Apply sensible default contract address for supported chains if not provided
     const effectiveContractAddress = contractAddress || DEFAULT_CONTRACTS[chainTicker];
@@ -595,7 +605,7 @@ const getChallenge = async ({
     const ownershipError = (sharedProps.error || '').replace("{authorAddress}", authorWalletAddress);
     const failedDueToMissingNFT = (firstFailure === ownershipError);
 
-    if (failedDueToMissingNFT) {
+    if (failedDueToMissingNFT && !noChallengeUrlBool) {
         // Return a Challenge requiring an answer. The answer can be an empty string "".
         // On verify, re-check NFT ownership and return the up-to-date result.
         const challenge = `https://mintpass.org/request/${authorWalletAddress}?hide-nft=true&hide-address=true`;
