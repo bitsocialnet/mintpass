@@ -213,6 +213,10 @@ Configured scripts:
 
 Use these as defaults when your agent supports lifecycle hooks.
 
+## Git Worktrees
+
+- Always give a new worktree a descriptive name that reflects the task (e.g. `fix-mint-cooldown`, not `wt1`, `tmp`, `feature`, or a numbered slug), so it can be identified at a glance in a long list of worktrees.
+
 ## GitHub Workflow
 
 ### Commits
