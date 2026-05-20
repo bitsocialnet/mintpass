@@ -17,6 +17,21 @@ This is not a single app repo. Treat it as a coordinated multi-project codebase.
 - Clean up only artifacts created by the current change, such as newly unused imports or dead helper code.
 - For non-trivial work, define success criteria and verify them with the narrowest reliable checks before marking the task complete.
 
+## LLM Knowledge Base Policy
+
+Use compiled context for orientation, not as source of truth.
+
+Source of truth:
+
+- Code, tests, package manifests, docs, and runtime/live evidence when relevant.
+
+Compiled context:
+
+- `AGENTS.md`, directory-specific `AGENTS.md` files, `CLAUDE.md`, and repo-managed `.codex/`, `.cursor/`, and `.claude/` workflow files.
+- `docs/**`, tracked task notes, and tracked `llms.txt` / `llms-full.txt` files when present.
+
+Agents may use compiled context to navigate quickly, but must verify against source files before making behavioral claims or edits. External code graph, RAG, MCP, or wiki tools are optional local accelerators unless the developer explicitly asks to make one part of the committed workflow.
+
 ## Repository Shape (Critical)
 
 ```text
@@ -128,6 +143,10 @@ Run checks based on what you changed:
   - If challenge runtime/API changed, sync artifacts with root:
     - `yarn build:challenge`
     - `yarn publish:challenge`
+
+- If you change public docs or AI context (`README.md`, `AGENTS.md`, `docs/**`, `web/README.md`, `challenge/README.md`, `contracts/README.md`, or `scripts/generate-llms-files.mjs`):
+  - `yarn llms:generate`
+  - Inspect and commit any resulting changes to `llms*.txt` and `web/public/llms*.txt`
 
 - If you change multiple areas:
   - Run each affected package checks

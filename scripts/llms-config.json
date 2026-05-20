@@ -1,0 +1,42 @@
+{
+  "title": "MintPass",
+  "summary": "MintPass is an NFT-based authentication and anti-sybil system for Bitsocial communities and other decentralized apps.",
+  "repoUrl": "https://github.com/bitsocialnet/mintpass",
+  "llmsUrl": "https://mintpass.org/llms.txt",
+  "llmsFullUrl": "https://mintpass.org/llms-full.txt",
+  "shortOutputs": ["llms.txt", "web/public/llms.txt"],
+  "fullOutputs": ["llms-full.txt", "web/public/llms-full.txt"],
+  "links": [
+    ["Website", "https://mintpass.org"],
+    ["Repository", "https://github.com/bitsocialnet/mintpass"],
+    ["Challenge package", "https://www.npmjs.com/package/@bitsocial/mintpass-challenge"],
+    ["Bitsocial protocol", "https://bitsocial.net"]
+  ],
+  "notes": [
+    "This is a multi-project repo: web, contracts, challenge, docs, and generated challenge artifacts.",
+    "Secrets and private deployment values belong in environment variables or private operator files, never in committed docs.",
+    "Generated llms files are compiled context for AI contributors and deployed site readers; verify behavior against source."
+  ],
+  "docs": [
+    "README.md",
+    "AGENTS.md",
+    "web/README.md",
+    "challenge/README.md",
+    "contracts/README.md",
+    "docs/pkc-info.md",
+    "docs/challenges/README.md",
+    "docs/challenges/question.md",
+    "docs/challenges/evm-contract-call.md",
+    "docs/challenges/publication-match.md"
+  ],
+  "optionalDocs": [
+    "challenge/TESTING.md",
+    "challenge/AUTOMATED_TESTING.md",
+    "contracts/DEPLOYMENT.md",
+    "contracts/security-checklist.md",
+    "docs/challenges/blacklist.md",
+    "docs/challenges/captcha-canvas.md",
+    "docs/challenges/fail.md",
+    "docs/challenges/text-math.md"
+  ]
+}
