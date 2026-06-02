@@ -32,7 +32,6 @@ MintPass integrates as a challenge so Bitsocial communities can distinguish real
 mintpass/
 ├── contracts/   # MintPassV1 smart contract and tooling
 ├── challenge/   # Bitsocial challenge implementation (“mintpass”)
-├── web/         # Next.js website + API (mintpass.org)
 ├── docs/        # Documentation and specifications
 ├── tests/       # Cross‑component integration tests
 └── scripts/     # Deployment and utilities
@@ -42,7 +41,7 @@ mintpass/
 
 - `contracts/`: Solidity contracts (MintPassV1). Versioned, role‑based minting, token types per NFT (type 0 = SMS). See `contracts/README.md`.
 - `challenge/`: The Bitsocial challenge that checks for a MintPass NFT and applies additional rules (e.g., transfer cooldowns) to resist sybils.
-- `web/`: The user‑facing site and serverless backend. Sends SMS codes, verifies OTP, and mints or records successful verification. See `web/README.md`.
+- The hosted MintPass web app (the `mintpass.org` site + SMS-OTP / minting API) is **proprietary** and maintained in a separate private repository; it is not part of this public monorepo.
 
 ## Privacy and anti‑sybil design (high level)
 
@@ -59,7 +58,6 @@ mintpass/
 
 - Contracts: `cd contracts && yarn install && yarn test`
 - Challenge: `cd challenge && yarn install && yarn test`
-- Web: `cd web && yarn install && yarn dev` then open `https://mintpass.localhost/request`
 
 ## Using MintPass in your community
 
@@ -195,6 +193,9 @@ These items are exploratory; concrete work will land incrementally and stay conf
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MintPass is a mixed-license monorepo — see [LICENSE](LICENSE):
 
-Open source and commercial‑friendly. A hosted version is available at [mintpass.org](https://mintpass.org).
+- `challenge/` (`@bitsocial/mintpass-challenge`): GPL-3.0-or-later
+- `contracts/` (`@bitsocial/mintpass-contracts`): MIT
+
+The hosted MintPass web app is proprietary and maintained in a separate private repository. A hosted version is available at [mintpass.org](https://mintpass.org).

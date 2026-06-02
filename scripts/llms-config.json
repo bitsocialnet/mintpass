@@ -4,8 +4,8 @@
   "repoUrl": "https://github.com/bitsocialnet/mintpass",
   "llmsUrl": "https://mintpass.org/llms.txt",
   "llmsFullUrl": "https://mintpass.org/llms-full.txt",
-  "shortOutputs": ["llms.txt", "web/public/llms.txt"],
-  "fullOutputs": ["llms-full.txt", "web/public/llms-full.txt"],
+  "shortOutputs": ["llms.txt"],
+  "fullOutputs": ["llms-full.txt"],
   "links": [
     ["Website", "https://mintpass.org"],
     ["Repository", "https://github.com/bitsocialnet/mintpass"],
@@ -13,14 +13,13 @@
     ["Bitsocial protocol", "https://bitsocial.net"]
   ],
   "notes": [
-    "This is a multi-project repo: web, contracts, challenge, docs, and generated challenge artifacts.",
+    "This is a multi-project repo: contracts, challenge, docs, and generated challenge artifacts.",
     "Secrets and private deployment values belong in environment variables or private operator files, never in committed docs.",
     "Generated llms files are compiled context for AI contributors and deployed site readers; verify behavior against source."
   ],
   "docs": [
     "README.md",
     "AGENTS.md",
-    "web/README.md",
     "challenge/README.md",
     "contracts/README.md",
     "docs/pkc-info.md",
