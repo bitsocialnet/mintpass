@@ -5,7 +5,7 @@
   "type": "module",
   "description": "NFT-based authentication system for PKC communities",
   "author": "Bitsocial",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "exports": {
     "./challenge": {
       "types": "./dist/challenge/index.d.ts",
