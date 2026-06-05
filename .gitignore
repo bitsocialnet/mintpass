@@ -100,3 +100,5 @@ deployments/local/
 .codex/**/.DS_Store
 
 /.claude/worktrees
+
+.codegraph/
