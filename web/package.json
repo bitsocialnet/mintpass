@@ -52,7 +52,7 @@
     "eslint-config-next": "16.2.3",
     "portless": "0.11.1",
     "postcss": "^8.5.6",
-    "react-doctor": "0.2.16",
+    "react-doctor": "0.4.0",
     "tailwindcss": "^3.4.19",
     "typescript": "^6.0.2"
   },
