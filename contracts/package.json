@@ -1,6 +1,7 @@
 {
   "name": "@bitsocial/mintpass-contracts",
   "version": "1.0.0",
+  "license": "MIT",
   "private": true,
   "description": "MintPassV1 NFT smart contracts",
   "scripts": {
