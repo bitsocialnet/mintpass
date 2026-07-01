@@ -1,21 +1,9 @@
-MIT License
+MintPass is a mixed-license monorepo. The controlling license depends on the package you are using:
 
-Copyright (c) 2025 Bitsocial
+- `web` (the mintpass.org hosted site + API): `AGPL-3.0-or-later`. See `web/LICENSE`.
+- `challenge` (`@bitsocial/mintpass-challenge`): `GPL-3.0-or-later`. See `challenge/LICENSE`.
+- `contracts` (`@bitsocial/mintpass-contracts`): `MIT`. See `contracts/LICENSE`.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+All MintPass code is open source — you are free to run your own MintPass. The AGPL on `web` ensures that anyone who operates a modified MintPass service also publishes their changes, keeping the verification layer open and competitive rather than letting it be privatized.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE. 
+Unless a subdirectory says otherwise, root workspace files are provided for monorepo development only and are not offered as a separate redistributable package.

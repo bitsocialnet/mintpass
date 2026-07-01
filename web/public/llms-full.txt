@@ -231,9 +231,13 @@ These items are exploratory; concrete work will land incrementally and stay conf
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MintPass is fully open source — you're free to run your own. It's a mixed-license monorepo (see [LICENSE](LICENSE)):
 
-Open source and commercial‑friendly. A hosted version is available at [mintpass.org](https://mintpass.org).
+- `web/` (the mintpass.org hosted site + API): AGPL-3.0-or-later
+- `challenge/` (`@bitsocial/mintpass-challenge`): GPL-3.0-or-later
+- `contracts/` (`@bitsocial/mintpass-contracts`): MIT
+
+A hosted version is available at [mintpass.org](https://mintpass.org).
 ```
 
 ---

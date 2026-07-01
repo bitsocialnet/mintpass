@@ -36,7 +36,7 @@ export function Footer() {
             >
               Bitsocial Forge, Inc.
             </a>
-            {' '} • MIT License
+            {' '} • AGPL-3.0-or-later
           </div>
         </div>
       </div>
