@@ -171,7 +171,7 @@ bitsocial community edit your-community.bso \
   '--settings.challenges[0].options.transferCooldownSeconds' '604800'
 ```
 
-See the [bitsocial-cli documentation](https://github.com/bitsocial/bitsocial-cli) for full CLI reference.
+See the [bitsocial-cli documentation](https://github.com/bitsocialnet/bitsocial-cli) for full CLI reference.
 
 ## Where MintPass is useful
 
