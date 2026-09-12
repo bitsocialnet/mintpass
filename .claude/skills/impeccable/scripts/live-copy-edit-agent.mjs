@@ -449,11 +449,12 @@ function runCodex(prompt, { cwd, env, resultPath, logPath, timeoutMs = DEFAULT_T
   const args = [
     'exec',
     '--cd', cwd,
-    '--dangerously-bypass-approvals-and-sandbox',
     '--ephemeral',
     '--output-last-message', resultPath,
-    '-c', `model_reasoning_effort="${env.IMPECCABLE_LIVE_COPY_AGENT_EFFORT || 'low'}"`,
   ];
+  if (env.IMPECCABLE_LIVE_COPY_AGENT_EFFORT) {
+    args.push('-c', `model_reasoning_effort=${JSON.stringify(env.IMPECCABLE_LIVE_COPY_AGENT_EFFORT)}`);
+  }
   if (env.IMPECCABLE_LIVE_COPY_AGENT_MODEL) {
     args.push('--model', env.IMPECCABLE_LIVE_COPY_AGENT_MODEL);
   }
@@ -464,7 +465,6 @@ function runCodex(prompt, { cwd, env, resultPath, logPath, timeoutMs = DEFAULT_T
 function runClaude(prompt, { cwd, env, resultPath, logPath, timeoutMs = DEFAULT_TIMEOUT_MS }) {
   const args = [
     '--print',
-    '--permission-mode', 'bypassPermissions',
     '--output-format', 'json',
   ];
   if (env.IMPECCABLE_LIVE_COPY_AGENT_MODEL) {

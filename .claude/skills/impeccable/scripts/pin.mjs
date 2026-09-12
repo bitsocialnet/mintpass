@@ -10,7 +10,8 @@
  * `unpin audit` removes that shortcut.
  *
  * The script discovers harness directories (.claude/skills, .cursor/skills, etc.)
- * in the project root and creates/removes the pin in all of them.
+ * in the project root. Shared-source repositories pin in .agents/skills only;
+ * run the repository sync/check commands after changing shortcuts.
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
@@ -63,6 +64,8 @@ function findProjectRoot(startDir = process.cwd()) {
  * Find harness skill directories that have an impeccable skill installed.
  */
 function findHarnessDirs(projectRoot) {
+  const canonical = join(projectRoot, '.agents', 'skills');
+  if ((existsSync(join(projectRoot, 'scripts', 'sync-ai-workflow.mjs')) || existsSync(join(projectRoot, 'scripts', 'ai-workflow.mjs'))) && existsSync(join(canonical, 'impeccable'))) return [canonical];
   const dirs = [];
   for (const harness of HARNESS_DIRS) {
     const skillsDir = join(projectRoot, harness, 'skills');

@@ -33,6 +33,6 @@ Treat the comp as a north star, not something to trace. Do not rasterize core UI
 
 ## Produce only the assets the build needs
 
-When clean raster ingredients are required and the harness runs subagents, use the shipped asset producer, `impeccable-asset-producer` (`impeccable_asset_producer` in codex): give it the approved comp, output paths, required dimensions and formats, transparency needs, crop notes, and what must remain semantic code. Otherwise produce the minimum required assets in the current thread with whatever generation exists, the native tool or generate-image.mjs.
+When clean raster production is substantial and independent, delegate to an available worker using the instructions in [the asset-producer template](../agents/impeccable_asset_producer.toml). Give it the approved comp, output paths, dimensions/formats, transparency needs, crop notes, and what must remain semantic code. The template is not an automatically registered native role. Small or coupled asset work can stay in the current task, using the native image tool or the documented generate-image.mjs fallback.
 
 Return to [new-work.md](new-work.md) for the direction contract, implementation, and the finishing pass.

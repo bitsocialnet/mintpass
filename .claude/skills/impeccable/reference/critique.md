@@ -1,13 +1,13 @@
 ### Purpose
 
-Resolve one stable target, run two independent assessments, synthesize a design critique, persist a snapshot, and ask the user what to improve next. The chat response is the primary deliverable; the snapshot is an archive/backlog for future commands.
+Resolve one stable target, assess its design and detector/browser evidence, synthesize a design critique, persist a snapshot, and ask the user what to improve next. The chat response is the primary deliverable; the snapshot is an archive/backlog for future commands.
 
 ### Hard Invariants
 
-- Assessment A (design review) and Assessment B (detector/browser evidence) are both required.
-- Assessment A and B MUST run as two isolated sub-agents whenever a sub-agent/Task tool is exposed. Running them inline in this context is "possible" but is NOT permitted; it is a degraded run. Inline is allowed ONLY when no sub-agent tool exists (or the user declined, on harnesses that ask).
-- If you degrade for any reason, the report's first line MUST be a banner: `⚠️ DEGRADED: single-context (<reason>)`. A silent degraded critique is a failed critique.
-- Assessment A must finish before detector findings enter the parent synthesis context. Detector output is deterministic, but it still anchors judgment.
+- Cover Assessment A (design review) and Assessment B (detector/browser evidence) within the requested scope.
+- A focused local review is valid. An independent perspective is optional when isolation would improve a substantial review; no fixed agent count is required.
+- Describe the method and material evidence limitations accurately. Local execution alone is not a failed or degraded critique.
+- Record the initial design judgment before reading detector findings to reduce anchoring. When using independent workers, keep their initial verdicts separate until synthesis.
 - A skipped detector is a failed critique run unless `detect.mjs` is missing or crashes after a real attempt.
 - Viewable targets require browser inspection when available.
 - Any local server started only for critique visualization must run in the background, have a recorded stop method, and be stopped before final reporting unless the user asks to keep it.
@@ -28,24 +28,11 @@ Resolve one stable target, run two independent assessments, synthesize a design 
 
 ### Assessment Orchestration
 
-Delegate Assessment A and Assessment B to separate sub-agents. They must not see each other's output. Do not show findings to the user until synthesis.
+Perform the review locally or delegate a substantial independent assessment when useful. Give each worker the target, scope, context, and evidence contract without the other assessment’s verdict. Local reviews record the design assessment first, then collect detector/browser evidence and synthesize the findings.
 
-Sub-agent gate (all harnesses):
-- Unless a harness-specific gate below overrides this, spawn A and B as two isolated, parallel sub-agents whenever a sub-agent/Task tool is exposed. This is the default and is mandatory; do not run them inline because it is faster.
-- "Unavailable" means exactly one thing: no sub-agent/Task tool is exposed in this session (or, on harnesses that ask, the user declined). It does not mean inconvenient.
-- If and only if sub-agents are unavailable, fall back sequentially: finish and record Assessment A, then run Assessment B, then synthesize, and emit the degraded banner.
-- Whichever path you take, declare it in the report header (see Report header provenance). Skipping sub-agents without the banner is the most common failure of this command.
+Follow the active harness’s delegation API and existing authorization. Do not add a Codex-specific permission gate or compulsory agent count. Leave model and reasoning selection to supported runtime settings.
 
-Codex sub-agent gate (overrides the default above; Codex's permission model requires asking before spawning):
-- Asking is the normal path, not a degradation. Approving and spawning is the dual-agent path; do not emit the degraded banner just for asking.
-- If `spawn_agent` is exposed and the user explicitly allowed sub-agents, delegation, or parallel agent work, spawn A and B immediately.
-- If `spawn_agent` is exposed but the user did not explicitly allow sub-agents, ask exactly once: "Impeccable critique is designed to run two independent sub-agents for an unanchored assessment. May I use sub-agents for this critique?" Then stop until the user answers.
-- If allowed, spawn A and B. If declined, run sequentially and lead the report with `⚠️ DEGRADED: single-context (sub-agents declined by user)`.
-- If `spawn_agent` is not exposed, do not ask; run sequentially and lead with `⚠️ DEGRADED: single-context (spawn_agent unavailable in this session)`.
-- If spawning fails after permission, run sequentially and lead with `⚠️ DEGRADED: single-context (sub-agent spawn failed: <exact error>)`.
-Prefer `fork_context: false` with self-contained prompts containing cwd, target, live URL, references, product context, and output contract. If using `fork_context: true`, omit `agent_type`, `model`, and `reasoning_effort`.
-
-If browser automation is available, each assessment creates its own new tab. Never reuse an existing tab, even if it is already at the right URL.
+Browser checks stay sequential across the task. Reuse a task-owned session or start an isolated named session as allowed by the browser guidance; close only sessions created for this assessment. Reusing existing evidence is appropriate when the rendered state has not changed.
 
 ### Assessment A: Design Review
 
@@ -62,7 +49,7 @@ Return: design-specificity verdict, heuristic scores, cognitive load, emotional 
 
 ### Assessment B: Detector + Browser Evidence
 
-Run the bundled detector and browser visualization evidence. Assessment B is mandatory and must remain isolated from Assessment A until both are complete.
+Collect the relevant bundled-detector and browser evidence after recording the initial design judgment. An independent worker can collect this evidence when useful; the same task may perform both assessments sequentially.
 
 CLI scan:
 ```bash
@@ -87,9 +74,9 @@ Codex Browser note: Use the Browser skill. Do not spend a Browser attempt on `fi
 
 Return: CLI findings JSON/counts, browser console findings if applicable, false positives, and skipped/failed browser steps with concrete reasons.
 
-After Assessment B returns usable CLI findings, reuse them. Do not rerun `detect.mjs` in the parent unless Assessment B failed, was truncated, or omitted count, rule names, or file locations.
+Reuse usable CLI findings, whether collected locally or by a worker. Rerun `detect.mjs` only when the target changed or the prior scan failed, was truncated, or omitted counts, rule names, or file locations.
 
-Codex failure accounting: final Run Notes must include target slug, ignore list, assessment independence, CLI detector, browser visibility, overlay injection, live-server cleanup, temp-file cleanup, and any fallback signal used. Do not run repo status checks, late API spelunking, or unrelated verification after the report is assembled.
+Codex failure accounting: final Run Notes must include target slug, ignore list, assessment method and any independent contribution, CLI detector, browser visibility, overlay injection, live-server cleanup, temp-file cleanup, and any fallback signal used. Do not run repo status checks, late API spelunking, or unrelated verification after the report is assembled.
 
 ### Generate Combined Critique Report
 
@@ -103,9 +90,11 @@ Structure your feedback as a design director would:
 
 #### Report header provenance
 
-The report's first line MUST declare how the assessments were run, so a degraded run is never silent:
-- Dual-agent: `Method: dual-agent (A: <agent-id> · B: <agent-id>)`
-- Degraded: `⚠️ DEGRADED: single-context (<reason, e.g. no sub-agent tool exposed>)`
+Briefly state how the review was performed, for example:
+- `Method: local review (design assessment followed by detector/browser evidence)`
+- `Method: review with an independent perspective (<assessment and contributor>)`
+
+Name only work and evidence actually obtained. Report unavailable tools or incomplete coverage as specific limitations; do not label a local review failed or degraded merely because it used one context.
 
 #### Design Health Score
 > *Consult the [Heuristics Scoring Guide](#heuristics-scoring-guide) section below.*
@@ -180,7 +169,7 @@ Provocative questions that might unlock better solutions:
 - "What would a confident version of this look like?"
 
 #### Run Notes
-Keep this compact. Include status for target slug, ignore list, assessment independence, CLI detector, browser visibility, overlay injection, live server cleanup, and temp-file cleanup. For failed or skipped steps, give the concrete observed reason and the fallback signal used. In the final chat response, also include snapshot write and trend read status after persistence has run.
+Keep this compact. Include status for target slug, ignore list, assessment method and any independent contribution, CLI detector, browser visibility, overlay injection, live server cleanup, and temp-file cleanup. For failed or skipped steps, give the concrete observed reason and the fallback signal used. In the final chat response, also include snapshot write and trend read status after persistence has run.
 
 Codex Run Notes are final-chat only. Do not include this section in the persisted snapshot body, because persistence, trend read, and temp cleanup happen after the snapshot write and would otherwise archive stale status such as "pending after persistence."
 

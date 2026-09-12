@@ -537,7 +537,7 @@ Event: `{id, pageUrl, batch: {entries}, evidencePath?, chunk?, repair?, deadline
 
 The user already clicked Apply. Do not ask what to do, discard, or redirect to Go. The parent live thread keeps the foreground poll loop and sends the final `/poll --reply --data`.
 
-When native subagents are available, delegate source edits to `impeccable_manual_edit_applier` / `impeccable-manual-edit-applier`. Pass cwd, scripts path, event id, page URL, chunk/deadline, `batch`, `evidencePath`, and the canonical JSON result schema. The subagent must not poll or reply. If unavailable, apply inline with the same contract.
+When delegation helps, give an available worker the instructions in [the manual-edit template](../agents/impeccable_manual_edit_applier.toml), plus cwd, scripts path, event id, page URL, chunk/deadline, `batch`, `evidencePath`, and the canonical JSON result schema. The template is not an automatically registered role. The worker must not poll or reply. Small or coupled edits may be applied inline with the same contract.
 
 If `repair` is present, the previous Apply changed source but final validation failed. Fix the current source and return the same canonical JSON result; do not roll files back yourself. The browser will ask the user before any rollback.
 

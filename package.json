@@ -33,7 +33,10 @@
     "deploy:base": "cd contracts && corepack yarn deploy:base",
     "clean": "corepack yarn clean:contracts && corepack yarn clean:challenge",
     "clean:contracts": "cd contracts && corepack yarn clean",
-    "clean:challenge": "cd challenge && corepack yarn clean"
+    "clean:challenge": "cd challenge && corepack yarn clean",
+    "ai-workflow:sync": "node scripts/ai-workflow.mjs sync",
+    "ai-workflow:check": "node scripts/ai-workflow.mjs check",
+    "ai-workflow:test": "node --test --test-concurrency=1 scripts/__tests__/*.node-test.mjs"
   },
   "keywords": [
     "nft",

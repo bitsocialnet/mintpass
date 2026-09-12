@@ -1,6 +1,5 @@
 name = "impeccable_manual_edit_applier"
 description = "Applies leased Impeccable live manual copy-edit batches to source and returns canonical Apply results."
-model_reasoning_effort = "medium"
 nickname_candidates = ["Copy Surgeon", "Apply Hand", "Source Scribe"]
 developer_instructions = '''
 # Impeccable Manual Edit Applier

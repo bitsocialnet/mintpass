@@ -11,7 +11,8 @@ This is not a single app repo. Treat it as a coordinated multi-project codebase.
 
 ## Agent Operating Principles
 
-- Before editing, state important assumptions when the task is ambiguous. Ask instead of silently choosing between materially different interpretations.
+- Explicit user instructions take precedence over repository workflow guidance. Resolve routine choices within the request; ask when missing information materially changes the outcome.
+- Continue authorized work through implementation, appropriate verification, and fixes until the requested outcome is complete.
 - Prefer the smallest implementation that solves the requested problem. Do not add speculative abstractions, configurability, or features.
 - Keep diffs surgical. Do not refactor, reformat, rename, or "improve" adjacent code unless it is necessary for the task.
 - Clean up only artifacts created by the current change, such as newly unused imports or dead helper code.
@@ -27,7 +28,7 @@ Source of truth:
 
 Compiled context:
 
-- `AGENTS.md`, directory-specific `AGENTS.md` files, `CLAUDE.md`, and repo-managed `.codex/`, `.cursor/`, and `.claude/` workflow files.
+- `AGENTS.md`, directory-specific `AGENTS.md` files, `CLAUDE.md`, and repo-managed `.agents/`, `.codex/`, `.cursor/`, and `.claude/` workflow files.
 - `docs/**`, tracked task notes, and tracked `llms.txt` / `llms-full.txt` files when present.
 
 Agents may use compiled context to navigate quickly, but must verify against source files before making behavioral claims or edits. External code graph, RAG, MCP, or wiki tools are optional local accelerators unless the developer explicitly asks to make one part of the committed workflow.
@@ -115,42 +116,24 @@ React Doctor is advisory quality tooling for React architecture/perf/correctness
 - `cd web && yarn doctor`, `cd web && yarn doctor:score`, `cd web && yarn doctor:verbose`
 
 **Trigger rules:**
-- Run after touching React UI logic (`components`, `hooks`, route/page/view files, state/store code used by UI).
-- Run before opening PRs that include React behavior changes.
+- Use when React state, effects, data flow, or performance diagnostics would resolve a concern. Review only guidance relevant to the affected Next.js flow.
+- Do not run Doctor for documentation, styling alone, or every component edit.
 
 **Interpretation:**
 - Treat diagnostics as actionable recommendations.
 - Prioritize `error` diagnostics first, then `warning`.
 - Score is informative only; no merge blocking based on score yet.
 
-## Scope-Driven Validation (Required)
+## Verification by impact
 
-Run checks based on what you changed:
+- Documentation or AI context: review the diff and references. Run `yarn llms:generate` for public docs/AI context and include `llms*.txt` plus `web/public/llms*.txt`. AI skill changes also require `yarn ai-workflow:sync`, `yarn ai-workflow:check`, and `yarn ai-workflow:test`.
+- Isolated implementation changes: run a focused test/reproduction and the affected package’s lint/type checks where applicable. Add regression coverage for non-trivial testable bugs.
+- Web runtime, dependency, or build integration: use `web/` lint and build, plus affected tests. Select browsers/viewports for changed UI behavior; use Doctor when it answers a React architecture/performance concern. Auth/mint smoke tests need the appropriate environment and authorization for their external effects.
+- Contract behavior or interfaces: run the relevant contract tests and compile. Preserve checks for minting, access roles, token types, and metadata.
+- Challenge runtime or public API: run the affected challenge tests and build; refresh the committed challenge artifacts with root `yarn build:challenge` and `yarn publish:challenge`. The latter copies local artifacts; it does not publish to a registry.
+- Changes spanning package interfaces/build integration: run the affected package checks and the root build/tests needed to validate their interaction.
 
-- If you change `web/**`:
-  - `cd web && yarn doctor:score`
-  - `cd web && yarn lint`
-  - `cd web && yarn build`
-  - If API flow changed and envs are available: run smoke test (`yarn smoke:preview` or `yarn smoke:prod`)
-
-- If you change `contracts/**`:
-  - `cd contracts && yarn test`
-  - `cd contracts && yarn compile`
-
-- If you change `challenge/**`:
-  - `cd challenge && yarn test`
-  - `cd challenge && yarn build`
-  - If challenge runtime/API changed, sync artifacts with root:
-    - `yarn build:challenge`
-    - `yarn publish:challenge`
-
-- If you change public docs or AI context (`README.md`, `AGENTS.md`, `docs/**`, `web/README.md`, `challenge/README.md`, `contracts/README.md`, or `scripts/generate-llms-files.mjs`):
-  - `yarn llms:generate`
-  - Inspect and commit any resulting changes to `llms*.txt` and `web/public/llms*.txt`
-
-- If you change multiple areas:
-  - Run each affected package checks
-  - Then run root `yarn build` and root `yarn test`
+Serialize installs, full builds/tests, and browser sessions. Preserve other tasks’ processes and artifacts. Repeat checks only after relevant edits, failures, or unresolved concerns; respect explicit CI/release requirements.
 
 ## Code Style and Architecture
 
@@ -200,62 +183,25 @@ Run checks based on what you changed:
   - `dist/challenge/**`
 - When challenge source changes, regenerate artifacts and commit them when relevant to the change.
 
-## Recommended Skills
+## AI skills and native entry points
 
-Use these when applicable (they are available in this repo setup):
+`AGENTS.md` provides shared project guidance; `CLAUDE.md` imports it. The committed skill is `impeccable`, for requested frontend design/refinement work. Other skills may be available in a contributor’s app, but are not provided by this checkout.
 
-- `context7`: fetch current library/framework docs before API-sensitive changes
-- `vercel-react-best-practices`: performance and React/Next.js patterns for `web/`
-- `you-might-not-need-an-effect`: audit/refactor unnecessary `useEffect` usage
-- `playwright-cli`: browser automation and UI validation
-- `commit-format`: standardize Conventional Commit message output
-- `issue-format`: standardize GitHub issue title/description output
-- `impeccable`: design, redesign, critique, audit, polish, layout, typography, color, motion, or visual hierarchy work for `web/` (one `/impeccable` entry point with 23 design subcommands)
+- Edit `.agents/skills/`, which Codex and Cursor discover directly. `yarn ai-workflow:sync` generates the committed `.claude/skills/` copy for Claude Code. Run the check/test commands before finishing skill changes; remove obsolete generated files explicitly when retiring sources.
+- Do not duplicate `.codex/skills/` or `.cursor/skills/`. The bundled Impeccable `agents/*.toml` files are instruction templates, not automatically discovered custom agents. Read a relevant template and delegate to an available role when useful.
+- Keep model and reasoning defaults out of committed agent instructions/templates. Runtime invocation choices, user settings, and parent inheritance handle selection according to each app. A model alias still chooses a family; inheritance does not guarantee automatic selection of the best model.
+- Preserve the design skill’s licensed assets and source references. Load only the reference relevant to the requested design action; a narrow refinement does not require an interview, a redesign, or new product claims.
+- There are no default committed lifecycle hooks. Keep Git cleanup, installs, builds, and compulsory review loops out of session-end hooks. Design detector helpers remain optional, explicitly invoked tooling; normal design work does not install hooks.
+- Keep harness-specific configurations separate if introduced by a future authorized task: `.codex/agents/*.toml`, `.cursor/agents/*.md`, and `.claude/agents/*.md` are native agent paths. `.agents/roles` would be repository generator input, not a native app directory.
 
-## AI Tooling Rules
+Official references: [Codex skills](https://learn.chatgpt.com/docs/build-skills), [Cursor skills](https://cursor.com/docs/skills), [Claude skills](https://code.claude.com/docs/en/skills), and [Claude memory import](https://code.claude.com/docs/en/memory). Keep skill descriptions concise and supporting detail conditional, following [OpenAI’s skills guidance](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra).
 
-- Treat `.codex/`, `.cursor/`, and `.claude/` as repo-managed contributor tooling, not private scratch space.
-- Keep equivalent workflow files aligned across all toolchains when their directories contain the same skill, hook, or agent.
-- When changing shared agent behavior, update the relevant files in `.codex/skills/`, `.cursor/skills/`, `.claude/skills/`, `.codex/agents/`, `.cursor/agents/`, `.claude/agents/`, `.codex/hooks/`, `.cursor/hooks/`, `.claude/hooks/`, and their `hooks.json` or `config.toml` entry points as needed.
-- If `AGENTS.md` references a skill, agent, or hook, prefer a tracked file under `.codex/`, `.cursor/`, or `.claude/` rather than an untracked local-only instruction.
+## Git and delegation
 
-## AI Agent Hooks
-
-This repo already includes hooks:
-- `.codex/hooks.json`
-- `.cursor/hooks.json`
-
-Configured scripts:
-- `afterFileEdit`: `.cursor/hooks/format.sh`
-- `afterFileEdit`: `.cursor/hooks/yarn-install.sh`
-- `stop`: `.cursor/hooks/verify.sh`
-
-Use these as defaults when your agent supports lifecycle hooks.
-
-## Git Worktrees
-
-- Always give a new worktree a descriptive name that reflects the task (e.g. `fix-mint-cooldown`, not `wt1`, `tmp`, `feature`, or a numbered slug), so it can be identified at a glance in a long list of worktrees.
-
-## GitHub Workflow
-
-### Commits
-
-When proposing or implementing code changes, suggest a commit message:
-- Title in Conventional Commits format, wrapped in backticks
-- Use `perf:` for performance optimizations
-- Optional short description: 1-3 technical sentences about the solution
-
-Example:
-
-> **Commit title:** `fix: enforce mint cooldown check before writing mint state`
->
-> Moved the cooldown guard earlier in `web/src/pages/api/mint.ts` so failed requests do not write mint markers.
-
-### Issues
-
-When proposing or implementing code changes, suggest a trackable issue:
-- Short title wrapped in backticks
-- Description focuses on the problem (as-if not fixed yet), 2-3 concise sentences
+- Work on a descriptive task branch/worktree when isolation is useful, unless the user specifies the branch. Preserve unrelated changes and never switch another task’s checkout.
+- Stage only task-owned changes. Commit, push, publish, deploy, or open issues/PRs only within the user’s authorization; existing permission does not need repeated confirmation.
+- Use Conventional Commit wording when creating an authorized commit or when wording is requested. Do not append commit/issue suggestions to ordinary implementation reports.
+- Delegate substantial independent work when useful; give each child scope, ownership, and evidence to return. Keep small/coupled work local and serialize heavy verification.
 
 ## Bug Investigation (Mandatory First Step)
 
@@ -293,15 +239,13 @@ Then proceed with code changes.
 - Prefer CLI + scripts over heavy MCP servers when both are available.
 - Use `rg` for fast code search.
 
-## MCP Servers (Avoid by Default)
+## Tool selection
 
-- Do not use GitHub MCP for routine GitHub tasks; use `gh` CLI.
-- Do not use browser MCPs for UI testing; use `playwright-cli`.
-- Keep active MCP set small. Large MCP tool surfaces waste context and reduce agent quality.
+Use `gh` for GitHub operations and the existing browser verification tooling when relevant. Keep the active tool catalog relevant; deferred loading can reduce MCP context overhead. Do not install additional integrations or skills merely because a task mentions their domain.
 
 ## Troubleshooting
 
-- If a bug is unclear after local debugging and git-history review, search the web for recent framework/library issues and validated fixes.
+- Use official version-specific documentation when an API/platform uncertainty remains. Report missing private data or user-only reproduction details as the specific gap.
 
 ## Practical Boundaries
 

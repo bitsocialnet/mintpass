@@ -2,7 +2,7 @@
 
 Read this when the user invokes `$impeccable` with no argument. They are asking "what should I do?" Make the menu context-aware instead of static.
 
-Setup has already run `context.mjs`. If that reported `NO_PRODUCT_MD`, the project has no captured context yet: lead the menu with `$impeccable init` as the top recommendation (one line on why) and still show the rest below; don't silently jump into init. Otherwise run `node .agents/skills/impeccable/scripts/context-signals.mjs` once and read its JSON, then lead with the **2-3 highest-value next commands**, each with a one-line reason pulled from the signals, followed by the full menu (the Commands table in SKILL.md, grouped by category). **Never auto-run a command; the recommendation is a suggestion the user confirms.**
+Setup has already run `context.mjs`. If that reported `NO_PRODUCT_MD`, the project has no captured context yet: lead the menu with `$impeccable init` as the top recommendation (one line on why) and still show the rest below; don't silently jump into init. Otherwise run `node .agents/skills/impeccable/scripts/context-signals.mjs` once and read its JSON, then lead with the **2-3 highest-value next commands**, each with a one-line reason pulled from the signals, followed by the full menu (the table in [commands.md](commands.md), grouped by category). **Never auto-run a command; the recommendation is a suggestion the user confirms.**
 
 Reason over the signals; there is no score to obey:
 

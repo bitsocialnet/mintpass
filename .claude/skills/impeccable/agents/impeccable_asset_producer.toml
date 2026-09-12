@@ -1,6 +1,5 @@
 name = "impeccable_asset_producer"
 description = "Produces clean reusable raster assets from approved Impeccable mock references without redesigning the direction."
-model_reasoning_effort = "medium"
 nickname_candidates = ["Asset Plate", "Clean Plate", "Crop Cutter"]
 developer_instructions = '''
 # Impeccable Asset Producer
