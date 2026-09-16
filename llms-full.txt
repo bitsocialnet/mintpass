@@ -434,8 +434,9 @@ Serialize installs, full builds/tests, and browser sessions. Preserve other task
 
 ## AI skills and native entry points
 
-`AGENTS.md` provides shared project guidance; `CLAUDE.md` imports it. The committed skill is `impeccable`, for requested frontend design/refinement work. Other skills may be available in a contributor’s app, but are not provided by this checkout.
+`AGENTS.md` provides shared project guidance; `CLAUDE.md` imports it. The committed skills are `impeccable`, for requested frontend design/refinement work, and `retro`, for evidence-backed recurrence prevention. Other skills may be available in a contributor’s app, but are not provided by this checkout.
 
+- After a bug fix or substantive review correction exposes a preventable mistake, use the [retro skill](.agents/skills/retro/SKILL.md) to consider the smallest lasting prevention. Routine successful edits do not need a retrospective; no additional check is a valid outcome. Keep review-only requests free of edits.
 - Edit `.agents/skills/`, which Codex and Cursor discover directly. `yarn ai-workflow:sync` generates the committed `.claude/skills/` copy for Claude Code. Run the check/test commands before finishing skill changes; remove obsolete generated files explicitly when retiring sources.
 - Do not duplicate `.codex/skills/` or `.cursor/skills/`. The bundled Impeccable `agents/*.toml` files are instruction templates, not automatically discovered custom agents. Read a relevant template and delegate to an available role when useful.
 - Keep model and reasoning defaults out of committed agent instructions/templates. Runtime invocation choices, user settings, and parent inheritance handle selection according to each app. A model alias still chooses a family; inheritance does not guarantee automatic selection of the best model.
