@@ -1,3 +1,6 @@
+> [!WARNING]
+> **This project is archived and no longer maintained.** Bitsocial no longer needs phone/SMS verification. 5chan Pass and Seedit Gold will be paid, non-transferable NFTs on Ethereum that expire after 1 or 3 years. Users buy them directly and nobody has to run a server. Directory voting and the [EVM contract call challenge](https://github.com/bitsocialnet/evm-contract-challenge) will check the new passes directly. The `@bitsocial/mintpass-challenge` npm package is deprecated.
+
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 
 # MintPass - NFT Authentication Middleware for Bitsocial
