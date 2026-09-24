@@ -1,104 +1,17 @@
-# Dependencies
 node_modules/
-*/node_modules/
 .yarn/*
 !.yarn/patches
-!.yarn/plugins
 !.yarn/releases
-!.yarn/versions
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Production builds
-dist/*
-build/
-out/
-.next/
-
-# Allow published challenge artifacts
-!dist/challenge/
-!dist/challenge/v1/
-!dist/challenge/v1/**
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Smart contracts
-contracts/artifacts/
-contracts/cache/
-contracts/typechain/
-contracts/typechain-types/
+artifacts/
+cache/
+typechain-types/
 coverage/
 coverage.json
 gasReporterOutput.json
-
-# IDE and OS
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+dist/
+.env
+.env.*
+!.env.example
+deployments/*-hardhat.json
+deployments/*-hardhat.args.js
 .DS_Store
-Thumbs.db
-
-# Logs
-logs/
-*.log
-
-# Temporary files
-.tmp/
-*.tmp
-*.temp
-RELEASE_NOTES.md
-
-# Package manager locks (keep yarn.lock if using yarn)
-package-lock.json
-
-# Hardhat/Foundry artifacts
-artifacts/
-cache/
-out/
-
-# Deployment artifacts
-deployments/local/
-
-# Testing
-.coverage_artifacts/
-.coverage_cache/
-.coverage_contracts/
-
-.pkc
-
-# Repo-managed AI tooling
-.cursor/*
-.cursor/.DS_Store
-!.cursor/agents/
-!.cursor/agents/**
-!.cursor/hooks/
-!.cursor/hooks/**
-!.cursor/hooks.json
-!.cursor/skills/
-!.cursor/skills/**
-.cursor/**/.DS_Store
-
-.codex/*
-.codex/.DS_Store
-!.codex/agents/
-!.codex/agents/**
-!.codex/config.toml
-!.codex/hooks/
-!.codex/hooks/**
-!.codex/hooks.json
-!.codex/skills/
-!.codex/skills/**
-.codex/**/.DS_Store
-
-/.claude/worktrees
-
-.codegraph/
