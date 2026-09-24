@@ -15,8 +15,8 @@ contract RejectingReceiver {
         return pass.purchase{value: msg.value}(to, planId);
     }
 
-    function setPayout(MintPass pass, address newPayout) external {
-        pass.setPayout(newPayout);
+    function proposePayout(MintPass pass, address newPayout) external {
+        pass.proposePayout(newPayout);
     }
 
     receive() external payable {

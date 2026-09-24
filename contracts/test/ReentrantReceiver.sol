@@ -26,10 +26,6 @@ contract ReentrantReceiver {
         return pass.purchase{value: msg.value}(to, planId);
     }
 
-    function setPayout(address newPayout) external {
-        pass.setPayout(newPayout);
-    }
-
     receive() external payable {
         if (address(pass) == address(0) || reentryAttempts != 0) return;
         reentryAttempts++;

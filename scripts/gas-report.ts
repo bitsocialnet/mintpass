@@ -27,7 +27,8 @@ async function main() {
   await measure("purchase: first mint (gift), with refund", pass.connect(alice).purchase(carol.address, 0, { value: q0 + q0 / 100n }));
   await measure("purchase: renewal, exact pay", pass.connect(alice).purchase(alice.address, 0, { value: q0 }));
   await measure("purchase: renewal, with refund", pass.connect(bob).purchase(alice.address, 1, { value: (await pass.quote(1)) * 2n }));
-  await measure("setPayout", pass.connect(payout).setPayout(carol.address));
+  await measure("proposePayout", pass.connect(payout).proposePayout(carol.address));
+  await measure("acceptPayout", pass.connect(carol).acceptPayout());
 
   const width = Math.max(...rows.map(([l]) => l.length));
   for (const [label, gas] of rows) console.log(`${label.padEnd(width)}  ${gas.toString().padStart(9)}`);

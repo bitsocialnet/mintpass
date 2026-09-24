@@ -13,13 +13,15 @@ import {IERC5192} from "./interfaces/IERC5192.sol";
 /**
  * @title MintPass
  * @notice A paid, soulbound, expiring pass (a MintPass, e.g. 5chan Pass or Seedit Gold). Anyone
- * can buy a pass for any address `to` (the payer and the holder may differ). The price is fixed in US cents and paid in ETH, converted
- * with a Chainlink ETH/USD feed. Buying for an address that already holds a pass renews it: the
- * same token's expiry is extended. Every address holds at most one token, forever.
+ * can buy a pass for any address `to` (the payer and the holder may differ). The price is fixed in
+ * US cents and paid in ETH, converted with a Chainlink ETH/USD feed. Buying for an address that
+ * already holds a pass renews it: the same token's expiry is extended, up to {MAX_PREPAID} ahead.
+ * Every address holds at most one token, forever.
  *
  * The token is permanently locked (ERC-5192): it cannot be transferred, approved or burned, and no
  * one can mint except through {purchase}. There is no owner and no admin. The only privileged
- * function is {setPayout}, callable solely by the current payout address.
+ * action is rotating the payout: {proposePayout} by the current payout, then {acceptPayout} by
+ * the proposed one.
  *
  * @dev DELIBERATE DEVIATIONS FROM ERC-721 (read before integrating):
  *
@@ -57,6 +59,10 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
     uint256 private constant WEI_PER_ETH_DECIMALS = 18;
     uint256 private constant MAX_FEED_DECIMALS = 18;
 
+    /// @notice A pass can never be paid up more than this far ahead. Bounds what a malfunctioning
+    /// price feed (a near-zero quote) could give away, since passes cannot be revoked.
+    uint256 public constant MAX_PREPAID = 10 * 365 days;
+
     /// @notice Chainlink ETH/USD price feed (proxy) used to convert USD prices to wei.
     AggregatorV3Interface public immutable priceFeed;
 
@@ -64,10 +70,12 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
     /// {quote} and {purchase} revert with {StalePrice}.
     uint256 public immutable maxStaleness;
 
-    /// @notice Receives all proceeds. Can only be changed by itself, via {setPayout}.
+    /// @notice Receives all proceeds. Changed only via {proposePayout} and {acceptPayout}.
     address public payout;
     /// @dev Packed into the same slot as `payout`, which every purchase reads anyway.
     uint64 private _lastTokenId;
+    /// @notice The address {payout} proposed to hand over to; zero when none is pending.
+    address public pendingPayout;
 
     Plan[] private _plans;
     mapping(address owner => Holder) private _holders;
@@ -84,6 +92,7 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
         uint256 expiresAt
     );
 
+    event PayoutProposed(address indexed currentPayout, address indexed proposedPayout);
     event PayoutChanged(address indexed previousPayout, address indexed newPayout);
 
     /// @dev Transfers, approvals and burns are not supported.
@@ -97,6 +106,8 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
     error PayoutFailed();
     error RefundFailed();
     error NotPayout(address caller);
+    error NotPendingPayout(address caller);
+    error PrepaidLimitExceeded(uint256 expiresAt, uint256 limit);
     error InvalidPayout(address payout);
     error InvalidFeed(address feed);
     error InvalidMaxStaleness();
@@ -109,7 +120,8 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
      * @param payout_ Receives all proceeds. Must not be zero or this contract.
      * @param priceFeed_ Chainlink ETH/USD feed proxy. Must be a contract answering `decimals() <= 18`.
      * @param maxStaleness_ Maximum accepted feed answer age in seconds. Must be non-zero.
-     * @param plans_ Purchasable plans (plan id = array index). Non-empty; every duration and price non-zero.
+     * @param plans_ Purchasable plans (plan id = array index). Non-empty; every price non-zero and
+     * every duration non-zero and at most {MAX_PREPAID}.
      */
     constructor(
         string memory name_,
@@ -126,7 +138,9 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
         if (maxStaleness_ == 0) revert InvalidMaxStaleness();
         if (plans_.length == 0) revert NoPlans();
         for (uint256 i = 0; i < plans_.length; ++i) {
-            if (plans_[i].duration == 0 || plans_[i].priceUsdCents == 0) revert InvalidPlanConfig(i);
+            if (plans_[i].duration == 0 || plans_[i].duration > MAX_PREPAID || plans_[i].priceUsdCents == 0) {
+                revert InvalidPlanConfig(i);
+            }
             _plans.push(plans_[i]);
         }
 
@@ -142,7 +156,8 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
     /**
      * @notice Buy or renew the pass of `to` with plan `planId`, paying in ETH.
      * @dev If `to` has no pass, a new token is minted with `expiresAt = now + duration`. Otherwise the
-     * existing token is renewed: `expiresAt = max(expiresAt, now) + duration`. Exactly the quoted wei
+     * existing token is renewed: `expiresAt = max(expiresAt, now) + duration`, which may not exceed
+     * `now + MAX_PREPAID` (reverts with {PrepaidLimitExceeded}). Exactly the quoted wei
      * is forwarded to {payout}; any excess `msg.value` is refunded to `msg.sender`. Both transfers
      * happen after all state changes, under a reentrancy guard, and revert the purchase on failure.
      * @param to The address that holds the pass (may differ from the payer).
@@ -161,7 +176,9 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
         if (isNewPass) holder.tokenId = ++_lastTokenId;
         // Renewal stacks on the remaining time; an expired (or new) pass restarts from now.
         uint256 start = Math.max(holder.expiresAt, block.timestamp);
-        holder.expiresAt = SafeCast.toUint64(start + plan.duration);
+        uint256 newExpiry = start + plan.duration;
+        if (newExpiry > block.timestamp + MAX_PREPAID) revert PrepaidLimitExceeded(newExpiry, block.timestamp + MAX_PREPAID);
+        holder.expiresAt = SafeCast.toUint64(newExpiry);
         _holders[to] = holder;
         tokenId = holder.tokenId;
 
@@ -200,19 +217,30 @@ contract MintPass is ERC721, IERC5192, ReentrancyGuardTransient {
     }
 
     // ---------------------------------------------------------------------------------------------
-    // Payout: the only privileged function
+    // Payout: the only privileged action, in two steps
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * @notice Rotate the payout address. Only the current payout can call this.
-     * @dev Single-step: an address typo here sends all future proceeds to that address, irrecoverably.
+     * @notice Propose handing the payout role to `newPayout`. Only the current payout can call this;
+     * a new proposal replaces a pending one. Nothing changes until `newPayout` calls {acceptPayout},
+     * so a mistyped address cannot capture future proceeds.
      */
-    function setPayout(address newPayout) external {
-        address current = payout;
-        if (msg.sender != current) revert NotPayout(msg.sender);
+    function proposePayout(address newPayout) external {
+        if (msg.sender != payout) revert NotPayout(msg.sender);
         _requireValidPayout(newPayout);
-        payout = newPayout;
-        emit PayoutChanged(current, newPayout);
+        pendingPayout = newPayout;
+        emit PayoutProposed(msg.sender, newPayout);
+    }
+
+    /// @notice Complete a rotation proposed by {proposePayout}. Only the proposed address can call this.
+    function acceptPayout() external {
+        address proposed = pendingPayout;
+        // With nothing pending, `proposed` is zero and no caller can match it.
+        if (msg.sender != proposed) revert NotPendingPayout(msg.sender);
+        address previous = payout;
+        payout = proposed;
+        delete pendingPayout;
+        emit PayoutChanged(previous, proposed);
     }
 
     // ---------------------------------------------------------------------------------------------

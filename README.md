@@ -8,9 +8,9 @@ MintPass is a paid, non-transferable, expiring pass on Ethereum mainnet. Each Bi
 
 - The price is fixed in USD and paid in ETH, converted with the Chainlink ETH/USD feed. Nobody has to update prices by hand, and no stablecoin is involved.
 - Anyone can buy for any address: `purchase(to, planId)`. The payer (for example MetaMask) and the holder (for example a 5chan account's built-in address) can differ. Excess ETH is refunded to the payer.
-- Each address holds at most one token. Buying again for the same address renews that token; it never mints a second one.
+- Each address holds at most one token. Buying again for the same address renews that token; it never mints a second one. A pass can be paid up at most 10 years ahead.
 - The token is locked forever (ERC-5192). It cannot be transferred, approved or burned. There is no admin mint.
-- Proceeds go straight to a payout address. Changing the payout address is the only privileged action.
+- Proceeds go straight to a payout address. Changing the payout address is the only privileged action, and it takes two steps.
 
 Plans (both deployments): 365 days for $30, and 3 × 365 days for $60.
 
@@ -40,12 +40,12 @@ Other consequences to keep in mind:
 
 | Function | Notes |
 | --- | --- |
-| `purchase(address to, uint256 planId) payable returns (uint256 tokenId)` | Mints if `to` has no pass (`expiresAt = now + duration`). Otherwise renews: `expiresAt = max(expiresAt, now) + duration`. Forwards exactly the quote to `payout` and refunds the excess to `msg.sender`. |
+| `purchase(address to, uint256 planId) payable returns (uint256 tokenId)` | Mints if `to` has no pass (`expiresAt = now + duration`). Otherwise renews: `expiresAt = max(expiresAt, now) + duration`, at most `MAX_PREPAID` (10 × 365 days) past now. Forwards exactly the quote to `payout` and refunds the excess to `msg.sender`. |
 | `quote(uint256 planId) view returns (uint256 wei)` | The price in wei, rounded up. The UI should send `quote` plus a small buffer; the excess is refunded. |
 | `plans()`, `planCount()` | `Plan { uint64 duration; uint128 priceUsdCents }`. The plan id is the array index. |
 | `tokenOf(address)`, `expiresAt(tokenId)`, `isValid(address)` | `tokenOf` returns 0 if the address has no pass. Token ids start at 1. A pass is valid while `block.timestamp < expiresAt`. |
 | `balanceOf`, `ownerOf`, `locked`, `supportsInterface`, `tokenURI` | ERC-721 + ERC-5192. `tokenURI` returns on-chain JSON (a base64 data URI) with an `expiresAt` attribute. |
-| `setPayout(address)` | **The only privileged function.** Only the current payout can call it. It emits `PayoutChanged`. |
+| `proposePayout(address)`, `acceptPayout()`, `pendingPayout()` | **The only privileged action.** The current payout proposes a new address (emits `PayoutProposed`); nothing changes until that address calls `acceptPayout` (emits `PayoutChanged`). A new proposal replaces a pending one. |
 
 `purchase` and `quote` revert when:
 
@@ -57,7 +57,7 @@ Other consequences to keep in mind:
 
 ```sh
 yarn install
-yarn test          # 67 unit tests (the fork test is skipped)
+yarn test          # 72 unit tests (the fork test is skipped)
 yarn test:fork     # mainnet-fork test against the real feed (FORK_TEST_RPC_URL, default publicnode)
 yarn gas           # deterministic gas numbers
 yarn test:gas      # hardhat-gas-reporter over the unit tests
@@ -98,14 +98,15 @@ These numbers come from `yarn gas`, which runs on the in-process network with a 
 
 | Operation | Gas |
 | --- | --- |
-| Deploy (2 plans) | 2,199,307 |
-| First mint, exact payment | 132,254 |
-| First mint (gift), with refund | 139,169 |
-| Renewal, exact payment | 63,654 |
-| Renewal, with refund | 70,581 |
-| `setPayout` | 28,659 |
+| Deploy (2 plans) | 2,277,498 |
+| First mint, exact payment | 132,341 |
+| First mint (gift), with refund | 139,256 |
+| Renewal, exact payment | 63,741 |
+| Renewal, with refund | 70,668 |
+| `proposePayout` | 47,742 |
+| `acceptPayout` | 28,291 |
 
-The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measured 144,682 for a first mint and 76,106 for a renewal, both with refund. Runtime bytecode is 20,047 bytes, under the 24,576-byte limit.
+The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measured 144,769 for a first mint and 76,193 for a renewal, both with refund. Runtime bytecode is 9,488 bytes, under the 24,576-byte limit.
 
 ## Risks
 
@@ -113,9 +114,10 @@ The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measure
   - If the feed is stale (older than `maxStaleness`), returns a non-positive answer, or reverts, `quote` and `purchase` revert until the feed updates. Existing passes keep working.
   - There is no admin to switch feeds. If Chainlink ever deprecates this proxy, the contract can no longer sell passes. The fix is a new deployment, and consumers (voting criteria, challenge config) would have to point at it.
 - **Payout key loss.**
-  - Only the payout can call `setPayout`. If its key is lost, all future proceeds go to the lost address, and no one can redirect them.
-  - `setPayout` is single-step, so a mistyped address has the same effect.
-  - A payout that rejects ETH blocks every purchase until it rotates itself.
+  - Only the payout can propose a new payout. If its key is lost, all future proceeds go to the lost address, and no one can redirect them.
+  - A mistyped proposal changes nothing: only the proposed address can accept it, and the payout can replace the proposal.
+  - A payout that rejects ETH blocks every purchase until it hands the role over.
+- **Price feed malfunction.** A wildly wrong feed answer could make passes nearly free until Chainlink corrects it. Passes cannot be revoked, so `MAX_PREPAID` caps how far ahead any pass can be paid (10 years).
 - **No refunds.** Time is prepaid and cannot be cancelled. Renewals stack.
 - **Unsolicited gifts.** Anyone can mint a pass to any address or extend one. The recipient cannot refuse it or burn it.
 - **Contract payers must accept ETH refunds.** Otherwise they must send the exact quote, or the purchase reverts.
@@ -127,7 +129,8 @@ The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measure
 - **Overflow.** Expiry is `SafeCast.toUint64` and reverts instead of wrapping. The token counter uses checked arithmetic. Feed decimals are capped at 18.
 - **Stale and invalid oracle data.** Covered by the revert conditions above.
 - **Transfer, approve and burn paths.** None exist: `_update` only allows mints, and `approve` and `setApprovalForAll` revert.
-- **Griefing via `to`.** Minting uses `_mint`, not `_safeMint`, so it never calls into `to`. Gifts and renewals by third parties only add time.
+- **Griefing via `to`.** Minting uses `_mint`, not `_safeMint`, so it never calls into `to`. Gifts and renewals by third parties only add time, up to `MAX_PREPAID`.
+- **Deploy safety.** `test/config.test.ts` pins the deploy parameters; the deploy script saves its record right after the receipt, refuses a second live deployment of the same pass, and checks every plan on-chain afterwards.
 
 The contract has not had an external audit.
 

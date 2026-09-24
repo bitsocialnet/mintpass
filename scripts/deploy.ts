@@ -115,6 +115,13 @@ async function main() {
   }
 
   if (!deployer) fail("DEPLOYER_PRIVATE_KEY is required when DRY_RUN=0");
+
+  // A saved record means this deployment already exists; refuse to create a second contract.
+  const outDir = path.join(__dirname, "..", "deployments");
+  const base = path.join(outDir, `${deploymentKey}-${network.name}`);
+  if (!isLocal && fs.existsSync(`${base}.json`)) {
+    fail(`${path.relative(process.cwd(), `${base}.json`)} exists: ${deploymentKey} is already deployed on ${network.name}`);
+  }
   const balance = await provider.getBalance(deployer.address);
   if (balance < gas * maxFeePerGas) {
     console.log(`WARNING: deployer balance ${ethers.formatEther(balance)} ETH may not cover the deploy`);
@@ -128,6 +135,30 @@ async function main() {
   console.log(`address         ${address}`);
   console.log(`gas used        ${receipt!.gasUsed}`);
 
+  // Record the deployment before anything else can fail, so a later error never hides it.
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(
+    `${base}.json`,
+    JSON.stringify(
+      {
+        contract: "MintPass",
+        deployment: deploymentKey,
+        network: network.name,
+        chainId,
+        address,
+        txHash: tx.hash,
+        blockNumber: receipt!.blockNumber,
+        deployer: deployer.address,
+        constructorArgs,
+        timestamp: new Date().toISOString(),
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  fs.writeFileSync(`${base}.args.js`, `module.exports = ${JSON.stringify(constructorArgs, null, 2)};\n`);
+  console.log(`saved           ${base}.json`);
+
   // --- Post-deploy checks ----------------------------------------------------------------------
   const pass = await ethers.getContractAt("MintPass", address);
   const checks: [string, boolean][] = [
@@ -136,7 +167,11 @@ async function main() {
     ["payout", (await pass.payout()) === payout],
     ["priceFeed", (await pass.priceFeed()) === ethers.getAddress(target.priceFeed)],
     ["maxStaleness", (await pass.maxStaleness()) === BigInt(target.maxStalenessSeconds)],
-    ["planCount", (await pass.planCount()) === BigInt(deployment.plans.length)],
+    [
+      "plans",
+      JSON.stringify((await pass.plans()).map((p) => [Number(p.duration), Number(p.priceUsdCents)])) ===
+        JSON.stringify(deployment.plans.map((p) => [p.duration, p.priceUsdCents])),
+    ],
     ["ERC-5192", await pass.supportsInterface("0xb45a3c0e")],
     ["ERC-721", await pass.supportsInterface("0x80ac58cd")],
   ];
@@ -152,32 +187,6 @@ async function main() {
     console.log(`smoke purchase  quote ${ethers.formatEther(quote)} ETH, gas ${r!.gasUsed}, balanceOf(holder) = ${await pass.balanceOf(holder)}`);
   }
 
-  // --- Record the deployment ---------------------------------------------------------------------
-  const outDir = path.join(__dirname, "..", "deployments");
-  fs.mkdirSync(outDir, { recursive: true });
-  const base = path.join(outDir, `${deploymentKey}-${network.name}`);
-  const argsForFile = constructorArgs;
-  fs.writeFileSync(
-    `${base}.json`,
-    JSON.stringify(
-      {
-        contract: "MintPass",
-        deployment: deploymentKey,
-        network: network.name,
-        chainId,
-        address,
-        txHash: tx.hash,
-        blockNumber: receipt!.blockNumber,
-        deployer: deployer.address,
-        constructorArgs: argsForFile,
-        timestamp: new Date().toISOString(),
-      },
-      null,
-      2,
-    ) + "\n",
-  );
-  fs.writeFileSync(`${base}.args.js`, `module.exports = ${JSON.stringify(argsForFile, null, 2)};\n`);
-  console.log(`saved           ${base}.json`);
   if (!isLocal) {
     console.log(`\nverify: yarn hardhat verify --network ${network.name} --constructor-args ${path.relative(process.cwd(), `${base}.args.js`)} ${address}`);
     console.log(`explorer: ${target.explorer}/address/${address}`);

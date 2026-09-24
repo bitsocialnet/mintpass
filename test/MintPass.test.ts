@@ -547,15 +547,31 @@ describe("MintPass", function () {
       await expect(pass.expiresAt(1)).to.be.revertedWithCustomError(pass, "ERC721NonexistentToken").withArgs(1);
     });
 
-    it("reverts instead of overflowing the uint64 expiry", async function () {
-      const { pass, payout, feed, alice } = await loadFixture(fixture);
-      const huge = await deployPass({
-        payout: payout.address,
-        feed: await feed.getAddress(),
-        plans: [{ duration: 2n ** 64n - 1n, priceUsdCents: 1n }],
-      });
-      await expect(huge.connect(alice).purchase(alice.address, 0, { value: ethers.parseEther("1") }))
-        .to.be.revertedWithCustomError(pass, "SafeCastOverflowedUintDowncast");
+    it("caps prepaid time at MAX_PREPAID ahead of now", async function () {
+      const { pass, alice, plan0Wei } = await loadFixture(fixture);
+      const maxPrepaid = await pass.MAX_PREPAID();
+      expect(maxPrepaid).to.equal(10n * YEAR);
+      const plan1Wei = await pass.quote(1);
+      // 3 x 3 years = 9 years ahead, then 1 more year reaches exactly 10 years minus elapsed seconds.
+      for (let i = 0; i < 3; i++) await pass.connect(alice).purchase(alice.address, 1, { value: plan1Wei });
+      await pass.connect(alice).purchase(alice.address, 0, { value: plan0Wei });
+      const expiry = await pass.expiresAt(await pass.tokenOf(alice.address));
+      expect(expiry - BigInt(await time.latest())).to.be.lte(maxPrepaid);
+
+      await expect(pass.connect(alice).purchase(alice.address, 0, { value: plan0Wei })).to.be.revertedWithCustomError(
+        pass,
+        "PrepaidLimitExceeded",
+      );
+    });
+
+    it("rejects plans longer than MAX_PREPAID at deployment", async function () {
+      const { pass, payout, feed } = await loadFixture(fixture);
+      await expect(
+        deployPass({ payout: payout.address, feed: await feed.getAddress(), plans: [{ duration: 10n * YEAR + 1n, priceUsdCents: 1n }] }),
+      )
+        .to.be.revertedWithCustomError(pass, "InvalidPlanConfig")
+        .withArgs(0);
+      await deployPass({ payout: payout.address, feed: await feed.getAddress(), plans: [{ duration: 10n * YEAR, priceUsdCents: 1n }] });
     });
   });
 
@@ -637,41 +653,71 @@ describe("MintPass", function () {
         .filter((f) => f.stateMutability !== "view" && f.stateMutability !== "pure")
         .map((f) => f.name)
         .sort();
-      expect(mutating).to.deep.equal(["purchase", "safeTransferFrom", "safeTransferFrom", "setPayout", "transferFrom"]);
+      expect(mutating).to.deep.equal(["acceptPayout", "proposePayout", "purchase", "safeTransferFrom", "safeTransferFrom", "transferFrom"]);
     });
   });
 
   describe("payout", function () {
-    it("lets the payout rotate itself; proceeds follow the new payout", async function () {
+    it("rotates in two steps; proceeds follow the new payout only after it accepts", async function () {
       const { pass, alice, payout, carol, plan0Wei } = await loadFixture(fixture);
-      await expect(pass.connect(payout).setPayout(carol.address))
-        .to.emit(pass, "PayoutChanged")
+      await expect(pass.connect(payout).proposePayout(carol.address))
+        .to.emit(pass, "PayoutProposed")
         .withArgs(payout.address, carol.address);
+      expect(await pass.payout()).to.equal(payout.address);
+      expect(await pass.pendingPayout()).to.equal(carol.address);
+      await expect(pass.connect(alice).purchase(alice.address, 0, { value: plan0Wei })).to.changeEtherBalances(
+        [payout, carol],
+        [plan0Wei, 0n],
+      );
+
+      await expect(pass.connect(carol).acceptPayout()).to.emit(pass, "PayoutChanged").withArgs(payout.address, carol.address);
       expect(await pass.payout()).to.equal(carol.address);
+      expect(await pass.pendingPayout()).to.equal(ethers.ZeroAddress);
       await expect(pass.connect(alice).purchase(alice.address, 0, { value: plan0Wei })).to.changeEtherBalances(
         [payout, carol],
         [0n, plan0Wei],
       );
-      await expect(pass.connect(payout).setPayout(payout.address))
+      await expect(pass.connect(payout).proposePayout(payout.address))
         .to.be.revertedWithCustomError(pass, "NotPayout")
         .withArgs(payout.address);
     });
 
-    it("rejects setPayout from anyone else", async function () {
+    it("rejects proposals from anyone but the payout", async function () {
       const { pass, deployer, mallory } = await loadFixture(fixture);
       for (const caller of [deployer, mallory]) {
-        await expect(pass.connect(caller).setPayout(caller.address))
+        await expect(pass.connect(caller).proposePayout(caller.address))
           .to.be.revertedWithCustomError(pass, "NotPayout")
           .withArgs(caller.address);
       }
     });
 
+    it("lets only the pending address accept, and only once", async function () {
+      const { pass, payout, carol, mallory } = await loadFixture(fixture);
+      await expect(pass.connect(carol).acceptPayout()).to.be.revertedWithCustomError(pass, "NotPendingPayout").withArgs(carol.address);
+
+      await pass.connect(payout).proposePayout(carol.address);
+      for (const caller of [payout, mallory]) {
+        await expect(pass.connect(caller).acceptPayout()).to.be.revertedWithCustomError(pass, "NotPendingPayout").withArgs(caller.address);
+      }
+      await pass.connect(carol).acceptPayout();
+      await expect(pass.connect(carol).acceptPayout()).to.be.revertedWithCustomError(pass, "NotPendingPayout").withArgs(carol.address);
+    });
+
+    it("replaces a pending proposal, so a typo can be corrected before anything changes", async function () {
+      const { pass, payout, carol, mallory } = await loadFixture(fixture);
+      await pass.connect(payout).proposePayout(mallory.address);
+      await pass.connect(payout).proposePayout(carol.address);
+      await expect(pass.connect(mallory).acceptPayout()).to.be.revertedWithCustomError(pass, "NotPendingPayout").withArgs(mallory.address);
+      await pass.connect(carol).acceptPayout();
+      expect(await pass.payout()).to.equal(carol.address);
+    });
+
     it("rejects a zero or self payout", async function () {
       const { pass, payout, passAddress } = await loadFixture(fixture);
-      await expect(pass.connect(payout).setPayout(ethers.ZeroAddress))
+      await expect(pass.connect(payout).proposePayout(ethers.ZeroAddress))
         .to.be.revertedWithCustomError(pass, "InvalidPayout")
         .withArgs(ethers.ZeroAddress);
-      await expect(pass.connect(payout).setPayout(passAddress))
+      await expect(pass.connect(payout).proposePayout(passAddress))
         .to.be.revertedWithCustomError(pass, "InvalidPayout")
         .withArgs(passAddress);
     });
@@ -685,8 +731,9 @@ describe("MintPass", function () {
       ).to.be.revertedWithCustomError(pass, "PayoutFailed");
       expect(await pass.tokenOf(alice.address)).to.equal(0n);
 
-      // A contract payout can still rotate itself.
-      await receiver.setPayout(await pass.getAddress(), carol.address);
+      // A contract payout can still hand the role over.
+      await receiver.proposePayout(await pass.getAddress(), carol.address);
+      await pass.connect(carol).acceptPayout();
       await expect(pass.connect(alice).purchase(alice.address, 0, { value: plan0Wei })).to.changeEtherBalance(
         carol,
         plan0Wei,
