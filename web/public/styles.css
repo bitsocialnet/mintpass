@@ -1,0 +1,635 @@
+/* Exo and Spline Sans Mono are self-hosted (SIL OFL 1.1, licenses in /fonts). */
+@font-face {
+  font-family: "Exo";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/exo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Exo";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/exo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+    U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Spline Sans Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/spline-sans-mono.woff2") format("woff2");
+}
+
+/* Colors come from the MintPass mark: a teal-outlined card with mint leaves. */
+:root {
+  --paper: #e6efec;
+  --paper-raised: #f2f7f5;
+  --ink: #0c2a2e;
+  --ink-soft: #3b5a5e;
+  --teal: #0f6b72;
+  --mint: #9ed8cf;
+  --rule: rgba(15, 107, 114, 0.22);
+  --focus: #0f6b72;
+
+  /* The two passes wear their apps' own colors. */
+  --fivechan-paper: #f0e0d6;
+  --fivechan-ink: #800000;
+  --seedit-card: #1f1f1f;
+  --seedit-gold: #c8a12c;
+  --seedit-gold-dim: #6b5a26;
+
+  --font: "Exo", system-ui, sans-serif;
+  --mono: "Spline Sans Mono", ui-monospace, monospace;
+  --measure: 38rem;
+  --page: 66rem;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0a1f21;
+    --paper-raised: #10292c;
+    --ink: #dcefeb;
+    --ink-soft: #9dbdb9;
+    --teal: #5cc3bb;
+    --rule: rgba(92, 195, 187, 0.22);
+    --focus: #9ed8cf;
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--teal);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--ink);
+  color: var(--paper);
+  z-index: 10;
+}
+
+.skip:focus {
+  top: 1rem;
+}
+
+/* Header and footer */
+
+.site-header,
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.site-header nav,
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+}
+
+.site-header nav a,
+.site-footer nav a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.site-header nav a:hover,
+.site-footer nav a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.site-footer {
+  border-top: 1px solid var(--rule);
+  margin-top: 5rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* Hero */
+
+main {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 3rem;
+  padding: 4.5rem 0 5.5rem;
+}
+
+h1 {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2.5rem, 5.4vw, 4rem);
+  font-weight: 850;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  max-width: 12ch;
+}
+
+.lede {
+  margin: 0 0 1.5rem;
+  max-width: var(--measure);
+  font-size: 1.2rem;
+  color: var(--ink-soft);
+}
+
+.status {
+  margin: 0;
+  max-width: var(--measure);
+  padding-left: 0.9rem;
+  border-left: 3px solid var(--teal);
+}
+
+/* The passes: the page's one physical object. Card proportions follow ID-1 (85.6 × 54 mm). */
+
+.hero-passes {
+  position: relative;
+  min-height: 21rem;
+}
+
+.pass {
+  position: absolute;
+  width: min(22rem, 100%);
+  aspect-ratio: 85.6 / 54;
+  padding: 1.35rem 1.4rem 1.2rem;
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+}
+
+.pass-5chan {
+  left: 0;
+  bottom: 0;
+  transform: rotate(-4deg);
+  background-color: var(--fivechan-paper);
+  color: var(--fivechan-ink);
+  /* Guilloche: two offset rings of fine lines that interfere like security print. */
+  background-image: repeating-radial-gradient(
+      circle at 18% 120%,
+      transparent 0 5px,
+      rgba(128, 0, 0, 0.1) 5px 6px
+    ),
+    repeating-radial-gradient(circle at 92% -20%, transparent 0 7px, rgba(128, 0, 0, 0.08) 7px 8px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 18px 30px -12px rgba(12, 42, 46, 0.45),
+    0 3px 6px rgba(12, 42, 46, 0.18);
+  z-index: 2;
+}
+
+.pass-seedit {
+  right: 0;
+  top: 0;
+  transform: rotate(5deg);
+  background-color: var(--seedit-card);
+  color: var(--seedit-gold);
+  background-image: repeating-radial-gradient(
+      circle at 85% 115%,
+      transparent 0 6px,
+      rgba(200, 161, 44, 0.13) 6px 7px
+    ),
+    linear-gradient(115deg, transparent 35%, rgba(200, 161, 44, 0.16) 50%, transparent 65%);
+  border: 1px solid var(--seedit-gold-dim);
+  box-shadow: 0 16px 28px -14px rgba(0, 0, 0, 0.55);
+  z-index: 1;
+}
+
+/* Microprint along the top edge, as on printed IDs. */
+.micro {
+  position: absolute;
+  top: 0.35rem;
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 4.5px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0.55;
+  text-align: center;
+}
+
+.punch {
+  position: absolute;
+  top: 0.85rem;
+  left: 50%;
+  width: 2.4rem;
+  height: 0.5rem;
+  margin-left: -1.2rem;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.seal {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 2.5rem;
+  height: auto;
+  align-self: start;
+}
+
+.pass-name {
+  grid-column: 1;
+  margin: 0.4rem 0 0;
+  font-size: 1.65rem;
+  font-weight: 850;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.pass-issuer {
+  grid-column: 1;
+  margin: 0.1rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.pass-fields {
+  grid-column: 1 / -1;
+  align-self: end;
+  display: flex;
+  gap: 1.6rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.pass-fields dt {
+  opacity: 0.75;
+}
+
+.pass-fields dd {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* Rubber stamp, pressed once on load. */
+.stamp {
+  position: absolute;
+  right: 1.1rem;
+  bottom: 5.4rem;
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  color: rgba(128, 0, 0, 0.78);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transform: rotate(-9deg);
+  mix-blend-mode: multiply;
+  animation: stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1.25) 450ms both;
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-9deg) scale(2.2);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-9deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .stamp {
+    animation: none;
+  }
+}
+
+/* Content sections */
+
+.block {
+  padding: 3.5rem 0 0;
+  border-top: 1px solid var(--rule);
+  margin-top: 3.5rem;
+}
+
+.hero + .block {
+  margin-top: 0;
+}
+
+h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.intro,
+.aside,
+.block > p {
+  max-width: var(--measure);
+}
+
+.intro {
+  margin: 0 0 2rem;
+  color: var(--ink-soft);
+}
+
+.aside {
+  margin: 2rem 0 0;
+  color: var(--ink-soft);
+}
+
+.pass-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2.5rem;
+}
+
+.pass-info {
+  padding-top: 1rem;
+  border-top: 5px solid;
+}
+
+.info-5chan {
+  border-color: var(--fivechan-ink);
+}
+
+.info-seedit {
+  border-color: var(--seedit-gold);
+}
+
+.pass-info h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.for {
+  margin: 0 0 0.75rem;
+  color: var(--ink-soft);
+}
+
+.pass-info ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.pass-info li + li {
+  margin-top: 0.3rem;
+}
+
+/* Buying is a real sequence, so it is numbered. */
+.steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1.75rem;
+  max-width: 44rem;
+}
+
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.75rem 1fr;
+  column-gap: 1rem;
+}
+
+.steps li::before {
+  content: counter(step);
+  grid-row: 1 / span 2;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--teal);
+  border-radius: 50%;
+  color: var(--teal);
+  font-weight: 800;
+}
+
+.steps p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.backup {
+  margin-top: 2.75rem;
+  max-width: 44rem;
+  padding: 1.25rem 1.4rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-left: 5px solid var(--teal);
+}
+
+.backup p {
+  margin: 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.75rem 2.5rem;
+  margin: 1.5rem 0 0;
+}
+
+.facts dt {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+table {
+  width: 100%;
+  max-width: 44rem;
+  border-collapse: collapse;
+  margin: 1rem 0 1.25rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.7rem 1rem 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+thead th {
+  font-weight: 600;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+tbody td {
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+details {
+  max-width: 44rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+details:first-of-type {
+  border-top: 1px solid var(--rule);
+  margin-top: 1rem;
+}
+
+summary {
+  cursor: pointer;
+  padding: 1rem 0;
+  font-weight: 700;
+  list-style-position: outside;
+}
+
+details p {
+  margin: 0 0 1.1rem;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+}
+
+/* Narrow screens */
+
+@media (max-width: 52rem) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 2.5rem 0 3.5rem;
+  }
+
+  .hero-passes {
+    min-height: 0;
+    height: min(20rem, 72vw);
+    max-width: 26rem;
+  }
+
+  .pass {
+    width: min(19rem, 82%);
+  }
+
+  .pass-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 26rem) {
+  .pass {
+    padding: 1.1rem 1rem 0.9rem;
+  }
+
+  .pass-name {
+    font-size: 1.3rem;
+  }
+
+  .pass-fields {
+    gap: 1rem;
+  }
+
+  .stamp {
+    bottom: 4.3rem;
+    font-size: 0.7rem;
+  }
+}
+
+.hero-plain {
+  grid-template-columns: 1fr;
+}

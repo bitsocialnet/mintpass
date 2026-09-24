@@ -122,6 +122,15 @@ The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measure
 - **Unsolicited gifts.** Anyone can mint a pass to any address or extend one. The recipient cannot refuse it or burn it.
 - **Contract payers must accept ETH refunds.** Otherwise they must send the exact quote, or the purchase reverts.
 
+## Website
+
+`web/` is the static [mintpass.org](https://mintpass.org) site: plain HTML and CSS in `web/public/`, served as-is by the Vercel project `mintpass` (Root Directory `web`, settings in `web/vercel.json`). The root `.vercelignore` uploads only `web/` and never `.env` files. Deploy from a checkout of `master`:
+
+```sh
+vercel link --yes --project mintpass --scope toms-projects-2188af94   # once per checkout
+vercel deploy --prod
+```
+
 ## Security notes
 
 - **Reentrancy.** `purchase` is `nonReentrant` and follows checks-effects-interactions: all state and events come before the two ETH transfers. Tests cover payers and payouts that re-enter.

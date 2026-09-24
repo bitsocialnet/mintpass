@@ -15,3 +15,4 @@ dist/
 deployments/*-hardhat.json
 deployments/*-hardhat.args.js
 .DS_Store
+.vercel/
