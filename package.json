@@ -42,5 +42,14 @@
     "ts-node": "10.9.2",
     "typechain": "8.3.2",
     "typescript": "5.9.3"
+  },
+  "resolutions": {
+    "@nomicfoundation/hardhat-verify/undici": "^6.28.0",
+    "@sentry/node/cookie": "^0.7.0",
+    "hardhat/adm-zip": "^0.6.1",
+    "hardhat/undici": "^6.28.0",
+    "hardhat/uuid": "^11.1.1",
+    "mocha/serialize-javascript": "^7.0.5",
+    "solc/tmp": "^0.2.6"
   }
 }
