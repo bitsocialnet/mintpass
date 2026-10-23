@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MintPass: yearly passes for 5chan and Seedit</title>
+    <meta
+      name="description"
+      content="MintPass is a yearly pass for 5chan (5chan Pass) and Seedit (Seedit Gold). It belongs to your app account, can't be sold or moved, and funds Bitsocial development."
+    />
+    <meta name="author" content="Bitsocial Forge Inc." />
+    <meta name="theme-color" content="#e6efec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1f21" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/mintpass.png" type="image/png" />
+    <link rel="canonical" href="https://mintpass.org/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mintpass.org/" />
+    <meta property="og:title" content="MintPass" />
+    <meta property="og:description" content="Yearly passes for 5chan and Seedit that belong to your account and fund Bitsocial development." />
+    <meta property="og:image" content="https://mintpass.org/mintpass.png" />
+    <link rel="preload" href="/fonts/exo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="MintPass home">
+        <img src="/mintpass.png" alt="" width="30" height="36" />
+        <span>MintPass</span>
+      </a>
+      <nav aria-label="Sections">
+        <a href="#passes">Passes</a>
+        <a href="#buying">Buying</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/bitsocialnet/mintpass">Source</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title">A yearly pass for the Bitsocial apps you use.</h1>
+          <p class="lede">
+            MintPass is a pass you buy for 5chan or Seedit. It lives on Ethereum, belongs to your app account, and can't be sold
+            or moved. What you pay funds the people building Bitsocial.
+          </p>
+          <p class="status">
+            <strong>Not on sale yet.</strong> Sales open inside 5chan and Seedit once the contracts are live on Ethereum.
+          </p>
+        </div>
+
+        <div class="hero-passes" role="img" aria-label="A 5chan Pass and a Seedit Gold pass, each showing a holder address and an expiry date">
+          <div class="pass pass-seedit" aria-hidden="true">
+            <p class="micro">NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE</p>
+            <span class="punch"></span>
+            <p class="pass-name">Seedit Gold</p>
+            <p class="pass-issuer">MintPass</p>
+            <dl class="pass-fields">
+              <div><dt>Holder</dt><dd class="mono">0x9c1e…7a40</dd></div>
+              <div><dt>Valid until</dt><dd data-expiry="3">24 Sep 2029</dd></div>
+            </dl>
+          </div>
+          <div class="pass pass-5chan" aria-hidden="true">
+            <p class="micro">NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE</p>
+            <span class="punch"></span>
+            <img class="seal" src="/mintpass.png" alt="" width="40" height="48" />
+            <p class="pass-name">5chan Pass</p>
+            <p class="pass-issuer">MintPass</p>
+            <dl class="pass-fields">
+              <div><dt>Holder</dt><dd class="mono">0x4d7f…1b97</dd></div>
+              <div><dt>Valid until</dt><dd data-expiry="1">24 Sep 2027</dd></div>
+            </dl>
+            <p class="stamp">Non&#8209;transferable</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="passes" class="block" aria-labelledby="passes-title">
+        <h2 id="passes-title">Two passes, one contract</h2>
+        <p class="intro">
+          Each app sells its own pass, and both run on the same open-source MintPass contract. Prices are the same: $30 for a
+          year or $60 for three years.
+        </p>
+        <div class="pass-columns">
+          <article class="pass-info info-5chan">
+            <h3>5chan Pass</h3>
+            <p class="for">For 5chan, the imageboard with no admins.</p>
+            <ul>
+              <li>Vote on which board fills each directory slot.</li>
+              <li>Post on /vip/.</li>
+              <li>Skip the captcha on boards that accept the pass.</li>
+            </ul>
+          </article>
+          <article class="pass-info info-seedit">
+            <h3>Seedit Gold</h3>
+            <p class="for">For Seedit, the community forum with no admins.</p>
+            <ul>
+              <li>Vote on which communities Seedit lists by default.</li>
+              <li>Skip the captcha on communities that accept Seedit Gold.</li>
+            </ul>
+          </article>
+        </div>
+        <p class="aside">A pass never gets anyone around a ban. Every board and community keeps its own rules and moderators.</p>
+      </section>
+
+      <section id="buying" class="block" aria-labelledby="buying-title">
+        <h2 id="buying-title">How buying works</h2>
+        <ol class="steps">
+          <li>
+            <h3>Open the pass page in 5chan or Seedit.</h3>
+            <p>You buy from inside the app, for the account you're using.</p>
+          </li>
+          <li>
+            <h3>Pay in ETH from any Ethereum wallet.</h3>
+            <p>
+              The price is set in dollars and converted at the current rate. Anything you send over the price comes back in the
+              same transaction. You also pay the network fee.
+            </p>
+          </li>
+          <li>
+            <h3>The pass lands in your app account.</h3>
+            <p>
+              It's minted to the address built into your 5chan or Seedit account, not to the wallet you paid with. Voting and
+              captcha-free posting work right away, with nothing to connect.
+            </p>
+          </li>
+          <li>
+            <h3>Renew whenever you like.</h3>
+            <p>New time is added to whatever is left, up to 10 years ahead. An expired pass restarts from the day you renew.</p>
+          </li>
+        </ol>
+
+        <div class="backup" role="note">
+          <h3>Back up your account before you buy</h3>
+          <p>
+            Your pass belongs to your app account and can never be moved. If you lose the account, you lose the pass. Export a
+            backup from the app's settings and keep it somewhere safe.
+          </p>
+        </div>
+      </section>
+
+      <section id="guarantees" class="block" aria-labelledby="guarantees-title">
+        <h2 id="guarantees-title">What the contract guarantees</h2>
+        <dl class="facts">
+          <div>
+            <dt>It can't change hands.</dt>
+            <dd>A pass can't be transferred, sold, or burned. It stays with the account it was minted to.</dd>
+          </div>
+          <div>
+            <dt>One pass per account.</dt>
+            <dd>Buying again for the same account renews the pass you already have.</dd>
+          </div>
+          <div>
+            <dt>Nobody can take it away.</dt>
+            <dd>The contract has no admin. No one can revoke a pass, hand one out for free, or change the prices.</dd>
+          </div>
+          <div>
+            <dt>Priced in dollars, paid in ETH.</dt>
+            <dd>
+              The contract reads the Chainlink ETH/USD price feed. If the feed stops updating, sales pause until it's back;
+              passes keep working.
+            </dd>
+          </div>
+          <div>
+            <dt>The money funds development.</dt>
+            <dd>
+              Every payment goes straight to the address that funds Bitsocial development. That address can do one thing: hand
+              its role to a new address.
+            </dd>
+          </div>
+          <div>
+            <dt>Apps check it on Ethereum.</dt>
+            <dd>5chan and Seedit read the pass from the chain. No MintPass server sits in between.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="contracts" class="block" aria-labelledby="contracts-title">
+        <h2 id="contracts-title">Contracts</h2>
+        <table>
+          <caption class="visually-hidden">MintPass contract addresses on Ethereum</caption>
+          <thead>
+            <tr>
+              <th scope="col">Pass</th>
+              <th scope="col">Ethereum address</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">5chan Pass</th>
+              <td>Not deployed yet</td>
+            </tr>
+            <tr>
+              <th scope="row">Seedit Gold</th>
+              <td>Not deployed yet</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The contract is MIT licensed. Read the <a href="https://github.com/bitsocialnet/mintpass">source and tests on GitHub</a>.
+        </p>
+      </section>
+
+      <section id="faq" class="block" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+        <details>
+          <summary>Is this the old MintPass that asked for my phone number?</summary>
+          <p>
+            No. MintPass used to give out a free test NFT after a text-message check. That service is retired. The new MintPass
+            never asks for a phone number or any other personal information.
+          </p>
+        </details>
+        <details>
+          <summary>Can I buy a pass for someone else?</summary>
+          <p>Yes. Anyone can pay for a pass for any account address, and the pass goes to that account.</p>
+        </details>
+        <details>
+          <summary>What happens when my pass expires?</summary>
+          <p>
+            It stays in your account but stops counting for voting and captcha-free posting. Renewing brings the same pass back.
+          </p>
+        </details>
+        <details>
+          <summary>Is my purchase private?</summary>
+          <p>
+            No. Purchases are public Ethereum transactions, so paying from a wallet links that wallet to your account's pass
+            address for anyone to see. Pay from a fresh wallet if that matters to you.
+          </p>
+        </details>
+        <details>
+          <summary>Do I need a pass to use 5chan or Seedit?</summary>
+          <p>No. Reading and posting stay open to everyone. A pass adds voting and saves you some captchas.</p>
+        </details>
+        <details>
+          <summary>Can I get a refund?</summary>
+          <p>No. Pass time is prepaid and can't be cancelled.</p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; 2026 Bitsocial Forge Inc.</p>
+      <nav aria-label="Elsewhere">
+        <a href="https://github.com/bitsocialnet/mintpass">Source</a>
+        <a href="https://bitsocial.net">Bitsocial</a>
+        <a href="https://bitsocialforge.com">Bitsocial Forge</a>
+      </nav>
+    </footer>
+
+    <script src="/expiry.js" defer></script>
+  </body>
+</html>
