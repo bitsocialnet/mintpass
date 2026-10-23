@@ -1395,14 +1395,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bn.js@npm:4.11.6":
-  version: 4.11.6
-  resolution: "bn.js@npm:4.11.6"
-  checksum: 10c0/e6ee7d3f597f60722cc3361071e23ccf71d3387e166de02381f180f22d2fa79f5dbbdf9e4909e81faaf5da01c16ec6857ddff02678339ce085e2058fd0e405db
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^4.11.9":
+"bn.js@npm:^4.11.9, bn.js@npm:^4.12.3":
   version: 4.12.5
   resolution: "bn.js@npm:4.12.5"
   checksum: 10c0/e15e35d0e082fa43c5dd03b552041faf23bc870fbe5de0e41ab5d2d987875f43ffb1f8f57021494e9d71784223c59ddbba1819948b2c2648477a61ab7455aa42
@@ -1989,10 +1982,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"diff@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "diff@npm:7.0.0"
-  checksum: 10c0/251fd15f85ffdf814cfc35a728d526b8d2ad3de338dcbd011ac6e57c461417090766b28995f8ff733135b5fbc3699c392db1d5e27711ac4e00244768cd1d577b
+"diff@npm:^8.0.3":
+  version: 8.0.4
+  resolution: "diff@npm:8.0.4"
+  checksum: 10c0/7ee5d03926db4039be7252ac3b0abaae1bd122a2ca971e5ca7270e444e36ff83dd906fad1a719740ca347e97ed5dc8f458a76a8391dbcd7aff363bdafb348a00
   languageName: node
   linkType: hard
 
