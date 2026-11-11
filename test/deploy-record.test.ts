@@ -109,6 +109,7 @@ describe("deploy record", function () {
     // The contract landed but the update failed: the record must still name its address and nonce.
     expect(await ethers.provider.getCode(expected)).to.not.equal("0x");
     expect(readRecord(file)).to.include({ status: "broadcasting", address: expected, nonce });
+    expect(fs.existsSync(`${file}.tmp`), "partial temp file left by the failed write").to.equal(false);
   });
 
   it("keeps the record when sending the deploy fails, since a failed send may still have been broadcast", async function () {

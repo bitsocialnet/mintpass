@@ -14,6 +14,6 @@ dist/
 !.env.example
 deployments/*-hardhat.json
 deployments/*-hardhat.args.js
-# Left by a record write that failed part-way (scripts/deploy-record.ts).
+# Left by a record write that was interrupted part-way (scripts/deploy-record.ts).
 deployments/*.json.tmp
 .DS_Store

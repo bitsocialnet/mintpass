@@ -56,12 +56,22 @@ export function refuseExistingRecord(file: string): void {
  */
 function writeRecord(file: string, record: Record<string, unknown>): void {
   const tmp = `${file}.tmp`;
-  const fd = fs.openSync(tmp, "w");
   try {
-    fs.writeFileSync(fd, JSON.stringify({ ...record, timestamp: new Date().toISOString() }, null, 2) + "\n");
-    fs.fsyncSync(fd);
-  } finally {
-    fs.closeSync(fd);
+    const fd = fs.openSync(tmp, "w");
+    try {
+      fs.writeFileSync(fd, JSON.stringify({ ...record, timestamp: new Date().toISOString() }, null, 2) + "\n");
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch (error) {
+    // The record itself is untouched; drop the partial temp file and report the write error.
+    try {
+      fs.rmSync(tmp, { force: true });
+    } catch {
+      // Best effort: .gitignore covers a temp file left behind.
+    }
+    throw error;
   }
   fs.renameSync(tmp, file);
   // Flush the rename as well. Windows cannot open a directory.
