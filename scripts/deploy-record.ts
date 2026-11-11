@@ -46,8 +46,30 @@ export function refuseExistingRecord(file: string): void {
   throw new Error(`${name} exists: ${record.deployment} is already deployed on ${record.network} at ${record.address}`);
 }
 
+/**
+ * The record must be on disk before the deploy is sent, and survive a crash or power loss after that, so the
+ * data is flushed before returning. Writing a temp file and renaming it over the record means a failed or
+ * interrupted update (a full disk, Ctrl-C) leaves the previous record whole instead of a truncated file.
+ */
 function writeRecord(file: string, record: Record<string, unknown>): void {
-  fs.writeFileSync(file, JSON.stringify({ ...record, timestamp: new Date().toISOString() }, null, 2) + "\n");
+  const tmp = `${file}.tmp`;
+  const fd = fs.openSync(tmp, "w");
+  try {
+    fs.writeFileSync(fd, JSON.stringify({ ...record, timestamp: new Date().toISOString() }, null, 2) + "\n");
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+  fs.renameSync(tmp, file);
+  // Flush the rename as well. Windows cannot open a directory.
+  if (process.platform !== "win32") {
+    const dir = fs.openSync(path.dirname(file), "r");
+    try {
+      fs.fsyncSync(dir);
+    } finally {
+      fs.closeSync(dir);
+    }
+  }
 }
 
 /**

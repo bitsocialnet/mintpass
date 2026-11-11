@@ -88,6 +88,29 @@ describe("deploy record", function () {
     expect(() => refuseExistingRecord(file)).to.throw(`already deployed on mainnet at ${expected}`);
   });
 
+  it("keeps the broadcasting record intact when completing it fails part-way, for example on a full disk", async function () {
+    const { file, nonce, expected, run } = await setup();
+    // Patch fs as the script sees it; the namespace imported above is a read-only copy.
+    const nodeFs = require("fs");
+    const writeFileSync = nodeFs.writeFileSync;
+    nodeFs.writeFileSync = (target: unknown, data: unknown, ...rest: unknown[]) => {
+      if (String(data).includes('"status": "deployed"')) {
+        writeFileSync(target, String(data).slice(0, 40));
+        throw Object.assign(new Error("ENOSPC: no space left on device, write"), { code: "ENOSPC" });
+      }
+      return writeFileSync(target, data, ...rest);
+    };
+    try {
+      await expect(run()).to.be.rejectedWith("ENOSPC");
+    } finally {
+      nodeFs.writeFileSync = writeFileSync;
+    }
+
+    // The contract landed but the update failed: the record must still name its address and nonce.
+    expect(await ethers.provider.getCode(expected)).to.not.equal("0x");
+    expect(readRecord(file)).to.include({ status: "broadcasting", address: expected, nonce });
+  });
+
   it("keeps the record when sending the deploy fails, since a failed send may still have been broadcast", async function () {
     const { deployer, file, nonce, expected, run } = await setup(5);
     await setBalance(deployer.address, 0n);

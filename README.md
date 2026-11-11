@@ -57,7 +57,7 @@ Other consequences to keep in mind:
 
 ```sh
 yarn install
-yarn test          # 76 unit tests (the fork test is skipped)
+yarn test          # 77 unit tests (the fork test is skipped)
 yarn test:fork     # mainnet-fork test against the real feed (FORK_TEST_RPC_URL, default publicnode)
 yarn gas           # deterministic gas numbers
 yarn test:gas      # hardhat-gas-reporter over the unit tests
