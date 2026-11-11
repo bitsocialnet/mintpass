@@ -29,10 +29,10 @@ describe("deploy record", function () {
     const deployer = signers[deployerIndex];
     const feed = await ethers.deployContract("MockAggregator", [8, 2500n * 10n ** 8n]);
     const factory = await ethers.getContractFactory("MintPass");
-    const passArgs = (name: string, symbol: string) => [
+    const passArgs = (name: string, symbol: string, payout = signers[1].address) => [
       name,
       symbol,
-      signers[1].address,
+      payout,
       feed.target,
       7200,
       [{ duration: 365 * 86400, priceUsdCents: 3000 }],
@@ -121,7 +121,33 @@ describe("deploy record", function () {
     const message = refusal(file);
     expect(message).to.include('name() "5chan Pass"');
     expect(message).to.include('symbol() "5PASS"');
-    expect(message).to.include("has no code or holds another contract");
+    expect(message).to.include("has no code, holds another contract");
     expect(message).to.not.include("has code, that is the deployment");
+  });
+
+  it("lists every recorded constructor value, since the same pass with other values can take the recorded nonce", async function () {
+    const { deployer, passArgs, file, nonce, expected, run } = await setup(5);
+    const balance = await ethers.provider.getBalance(deployer.address);
+    await setBalance(deployer.address, 0n);
+    await expect(run()).to.be.rejected;
+
+    // A 5chan Pass with another payout (a second run with other settings, or a replacement sent by
+    // hand) takes the record's nonce. name() and symbol() match the record; payout() does not.
+    await setBalance(deployer.address, balance);
+    const otherPayout = (await ethers.getSigners())[2].address;
+    const other = await ethers.deployContract("MintPass", passArgs("5chan Pass", "5PASS", otherPayout), deployer);
+    await other.waitForDeployment();
+    expect(other.target).to.equal(expected);
+    const [name, symbol, payout, priceFeed, maxStaleness, plans] = readRecord(file).constructorArgs;
+    expect([await other.name(), await other.symbol()]).to.deep.equal([name, symbol]);
+    expect(await other.payout()).to.not.equal(payout);
+    expect(readRecord(file)).to.include({ status: "broadcasting", address: expected, nonce });
+
+    const message = refusal(file);
+    expect(message).to.include(`payout() ${payout}`);
+    expect(message).to.include(`priceFeed() ${priceFeed}`);
+    expect(message).to.include(`maxStaleness() ${maxStaleness}`);
+    expect(message).to.include(`plans() ${JSON.stringify(plans)}`);
+    expect(message).to.include("holds this pass with any other value");
   });
 });

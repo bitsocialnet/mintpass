@@ -19,19 +19,23 @@ export function refuseExistingRecord(file: string): void {
     throw new Error(`${name} exists but is not valid JSON: check it before deploying again`);
   }
   if (record.status === "broadcasting") {
-    // Whatever transaction takes the nonce decides what is at the address, and another pass deployed from the
-    // same key lands there too, so code at the address does not prove that this deploy landed.
-    const [passName, passSymbol] = record.constructorArgs ?? [];
+    // Whatever transaction takes the nonce decides what is at the address. Another pass deployed from the same
+    // key lands there too, and so does this pass sent with other values (a second run with other settings, or
+    // a replacement sent by hand). So neither code at the address nor a matching name proves that this deploy
+    // landed: every immutable value has to match the record.
+    const [passName, passSymbol, payout, priceFeed, maxStaleness, plans] = record.constructorArgs ?? [];
     const { address, nonce } = record;
     throw new Error(
       [
         `${name} exists: a deploy of ${record.deployment} on ${record.network} was sent, or was about to be, from ` +
           `${record.deployer} with nonce ${nonce}, and the run stopped before its receipt. Only the transaction ` +
-          `with nonce ${nonce} can put a contract at ${address}. Check that nonce and the code at ${address}:`,
-        `- Nonce ${nonce} used and ${address} holds this pass (name() "${passName}", symbol() "${passSymbol}"): ` +
-          `that is the deployment. Keep this file.`,
-        `- Nonce ${nonce} used and ${address} has no code or holds another contract (another pass deployed from ` +
-          `this key takes the same nonce): this deploy can never land. Delete this file and deploy again.`,
+          `with nonce ${nonce} can put a contract at ${address}. Check that nonce and the contract at ${address}:`,
+        `- Nonce ${nonce} used and ${address} holds this pass with every recorded value: name() "${passName}", ` +
+          `symbol() "${passSymbol}", payout() ${payout}, priceFeed() ${priceFeed}, maxStaleness() ${maxStaleness} ` +
+          `and plans() ${JSON.stringify(plans)}: that is the deployment. Keep this file.`,
+        `- Nonce ${nonce} used and ${address} has no code, holds another contract, or holds this pass with any ` +
+          `other value (another deploy from this key took the nonce): this deploy can never land. Delete this ` +
+          `file and deploy again.`,
         `- Nonce ${nonce} not used yet (the deployer's confirmed transaction count is ${nonce} or less): the deploy ` +
           `can still land. Wait for it, or use up the nonce with a 0 ETH transfer from the deployer to itself at ` +
           `nonce ${nonce}, with a higher fee if the deploy is still pending, and delete this file once that ` +
