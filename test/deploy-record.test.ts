@@ -167,10 +167,45 @@ describe("deploy record", function () {
     expect(readRecord(file)).to.include({ status: "broadcasting", address: expected, nonce });
 
     const message = refusal(file);
-    expect(message).to.include(`payout() ${payout}`);
+    expect(message).to.include(`initial payout ${payout}`);
     expect(message).to.include(`priceFeed() ${priceFeed}`);
     expect(message).to.include(`maxStaleness() ${maxStaleness}`);
     expect(message).to.include(`plans() ${JSON.stringify(plans)}`);
-    expect(message).to.include("holds this pass with any other value");
+    expect(message).to.include("holds this pass deployed with any other value, such as another initial payout");
+  });
+
+  it("compares the payout the pass was deployed with, since the payout can be rotated after deploying", async function () {
+    const { file, nonce, expected, run } = await setup();
+    // The deploy lands, but the run stops before completing the record: it is left as it was before sending.
+    await run();
+    const { txHash, blockNumber, ...sent } = readRecord(file);
+    fs.writeFileSync(file, JSON.stringify({ ...sent, status: "broadcasting" }));
+    expect(readRecord(file)).to.include({ status: "broadcasting", address: expected, nonce });
+
+    // Before the operator re-runs, the payout hands its role to another address.
+    const signers = await ethers.getSigners();
+    const pass = await ethers.getContractAt("MintPass", expected);
+    await pass.connect(signers[1]).proposePayout(signers[3].address);
+    await pass.connect(signers[3]).acceptPayout();
+
+    // This is the deployment: every recorded value matches, except that payout() has moved on.
+    const [name, symbol, payout, priceFeed, maxStaleness, plans] = sent.constructorArgs;
+    expect([await pass.name(), await pass.symbol(), await pass.priceFeed(), await pass.maxStaleness()]).to.deep.equal([
+      name,
+      symbol,
+      priceFeed,
+      BigInt(maxStaleness),
+    ]);
+    const onChainPlans = (await pass.plans()).map((p) => ({ duration: Number(p.duration), priceUsdCents: Number(p.priceUsdCents) }));
+    expect(onChainPlans).to.deep.equal(plans);
+    expect(await pass.payout()).to.equal(signers[3].address).and.not.equal(payout);
+    const [first] = await pass.queryFilter(pass.filters.PayoutChanged());
+    expect(first.args.previousPayout).to.equal(payout);
+
+    // The message must not ask for the current payout(), which would send the operator to "delete and deploy again".
+    const message = refusal(file);
+    expect(message).to.not.include(`payout() ${payout}`);
+    expect(message).to.include(`initial payout ${payout}`);
+    expect(message).to.include("the previousPayout of the first PayoutChanged event");
   });
 });

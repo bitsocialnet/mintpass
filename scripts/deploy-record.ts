@@ -22,7 +22,8 @@ export function refuseExistingRecord(file: string): void {
     // Whatever transaction takes the nonce decides what is at the address. Another pass deployed from the same
     // key lands there too, and so does this pass sent with other values (a second run with other settings, or
     // a replacement sent by hand). So neither code at the address nor a matching name proves that this deploy
-    // landed: every immutable value has to match the record.
+    // landed: every constructor value has to match the record. The payout is the only one that can change after
+    // deploying (the current payout can rotate it), so the message compares the payout the pass was deployed with.
     const [passName, passSymbol, payout, priceFeed, maxStaleness, plans] = record.constructorArgs ?? [];
     const { address, nonce } = record;
     throw new Error(
@@ -30,12 +31,14 @@ export function refuseExistingRecord(file: string): void {
         `${name} exists: a deploy of ${record.deployment} on ${record.network} was sent, or was about to be, from ` +
           `${record.deployer} with nonce ${nonce}, and the run stopped before its receipt. Only the transaction ` +
           `with nonce ${nonce} can put a contract at ${address}. Check that nonce and the contract at ${address}:`,
-        `- Nonce ${nonce} used and ${address} holds this pass with every recorded value: name() "${passName}", ` +
-          `symbol() "${passSymbol}", payout() ${payout}, priceFeed() ${priceFeed}, maxStaleness() ${maxStaleness} ` +
-          `and plans() ${JSON.stringify(plans)}: that is the deployment. Keep this file.`,
-        `- Nonce ${nonce} used and ${address} has no code, holds another contract, or holds this pass with any ` +
-          `other value (another deploy from this key took the nonce): this deploy can never land. Delete this ` +
-          `file and deploy again.`,
+        `- Nonce ${nonce} used and ${address} holds this pass deployed with every recorded value: name() ` +
+          `"${passName}", symbol() "${passSymbol}", priceFeed() ${priceFeed}, maxStaleness() ${maxStaleness}, ` +
+          `plans() ${JSON.stringify(plans)} and initial payout ${payout}. The payout can be rotated after ` +
+          `deploying, so the initial payout is the previousPayout of the first PayoutChanged event at ${address}, ` +
+          `or payout() if there is none. That is the deployment. Keep this file.`,
+        `- Nonce ${nonce} used and ${address} has no code, holds another contract, or holds this pass deployed with ` +
+          `any other value, such as another initial payout (another deploy from this key took the nonce): this ` +
+          `deploy can never land. Delete this file and deploy again.`,
         `- Nonce ${nonce} not used yet (the deployer's confirmed transaction count is ${nonce} or less): the deploy ` +
           `can still land. Wait for it, or use up the nonce with a 0 ETH transfer from the deployer to itself at ` +
           `nonce ${nonce}, with a higher fee if the deploy is still pending, and delete this file once that ` +
@@ -88,7 +91,7 @@ export async function deployAndRecord(opts: {
   const from = await opts.deployer.getAddress();
   const nonce = await opts.deployer.getNonce("pending");
   const address = ethers.getCreateAddress({ from, nonce });
-  // constructorArgs name the pass (name, symbol) that the guard tells the operator to look for at `address`.
+  // constructorArgs are the values the guard tells the operator to compare at `address`.
   const record = { ...opts.fields, constructorArgs: opts.args, address, deployer: from, nonce };
   writeRecord(opts.file, { status: "broadcasting", ...record });
   opts.log(`\nrecord          ${path.relative(process.cwd(), opts.file)} (before sending: address ${address}, nonce ${nonce})`);
