@@ -47,7 +47,7 @@ Nobody loses money on a testnet, so do the whole thing there first.
 3. Add every owner address. Check each one character by character against what the signer confirmed.
 4. Set the threshold (how many owners must sign).
 5. Review, then pay the creation transaction.
-6. Write the Safe address into the table in the README's deployment section once the passes are deployed against it. Each signer opens app.safe.global, connects their hardware wallet and checks that the Safe appears with the right owners and threshold.
+6. Each signer opens app.safe.global, connects their hardware wallet and checks that the Safe appears with the right owners and threshold. Keep the Safe address for step 3, where it is the `PAYOUT_ADDRESS`. It does not go in the README's deployment table, which lists the pass contracts.
 
 ### 1d. Test it before it holds anything
 
@@ -76,7 +76,7 @@ These steps need no Safe on mainnet and can be done now.
 
 ## 3. Deploy to mainnet
 
-Do this for `5chan-pass`, then repeat for `seedit-gold`.
+Do steps 2 to 9 for `5chan-pass`, then repeat them for `seedit-gold`, then step 10.
 
 1. Create a fresh deployer address used for nothing else. Fund it with enough ETH for two deployments. A deployment uses about 2.28M gas; the dry run prints the cost at the current gas price. The deployer gets no rights over the contract: there is no owner.
 2. Copy `.env.example` to `.env`. Set `MAINNET_RPC_URL` and `ETHERSCAN_API_KEY`.
@@ -107,7 +107,7 @@ Do this for `5chan-pass`, then repeat for `seedit-gold`.
 7. On Etherscan, read `payout()`, `plans()`, `name()` and `symbol()` from the verified contract and compare them with the dry run.
 8. Buy one real pass and check that the payment arrives in the Safe.
 9. Commit `deployments/*.json` and the `.args.js` files. Put the addresses in the README table.
-10. Move any ETH left in the deployer address out and stop using it.
+10. Once both passes are deployed, move any ETH left in the deployer address out and stop using it.
 
 The script refuses to deploy the same pass twice. A mistake in the parameters cannot be fixed afterwards; it needs a new deployment.
 
