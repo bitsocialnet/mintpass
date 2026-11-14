@@ -151,8 +151,8 @@
             <h3>Anyone pays for any address</h3>
             <p>
               <code>purchase(to, planId)</code> takes ETH from the payer and mints to <code>to</code>. A user can pay from
-              MetaMask and receive the pass on the address built into their app account. Extra ETH is refunded in the same
-              transaction.
+              MetaMask and receive the pass on the address built into their app account. Extra ETH is refunded to the payer
+              in the same transaction; a contract wallet that cannot receive ETH must send the exact <code>quote</code>.
             </p>
           </li>
           <li>
@@ -185,6 +185,8 @@
             <span>expires</span>
             <span>renewed</span>
           </div>
+        </div>
+        <div class="timeline">
           <p class="timeline-note">
             The token still exists after expiry and <code>ownerOf</code> still returns the holder. This departs from ERC-721 on
             purpose, so existing balance checks respect expiry without new code.
@@ -254,8 +256,13 @@
         <ol class="steps">
           <li>
             <h3>Fork the repository and add your pass.</h3>
-            <p>A name, a symbol and your plans in <code>deploy/config.ts</code>. These become immutable, so choose carefully.</p>
-            <pre><code>"my-pass": {
+            <p>
+              In <code>deploy/config.ts</code>, add your key to the <code>DeploymentKey</code> type, then a name, a symbol
+              and your plans to <code>DEPLOYMENTS</code>. These become immutable, so choose carefully.
+            </p>
+            <pre><code>export type DeploymentKey = "5chan-pass" | "seedit-gold" | "my-pass";
+
+"my-pass": {
   name: "My Pass",
   symbol: "MYPASS",
   plans: [{ duration: 365 * DAY, priceUsdCents: 3000 }],
