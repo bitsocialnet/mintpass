@@ -27,7 +27,7 @@
   src: url("/fonts/spline-sans-mono.woff2") format("woff2");
 }
 
-/* Colors come from the MintPass mark: a teal-outlined card with mint leaves. */
+/* Colors come from the MintPass mark: a teal ticket with mint leaves. */
 :root {
   --paper: #e6efec;
   --paper-raised: #f2f7f5;
@@ -156,6 +156,10 @@ a:hover {
   font-size: 1.25rem;
   letter-spacing: -0.01em;
   text-decoration: none;
+}
+
+.brand picture {
+  display: flex;
 }
 
 .site-header nav,

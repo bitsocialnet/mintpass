@@ -1,6 +1,9 @@
 # MintPass
 
-<img src="public/mintpass.png" alt="MintPass logo" width="90" align="left" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/mintpass-dark.png" />
+  <img src="public/mintpass.png" alt="MintPass logo" width="100" align="left" />
+</picture>
 
 MintPass is a paid, non-transferable, expiring pass on Ethereum mainnet. Each Bitsocial app deploys its own MintPass: **5chan Pass** for [5chan](https://github.com/bitsocialnet/5chan) and **Seedit Gold** for [Seedit](https://github.com/bitsocialnet/seedit). Holding a valid pass lets its holder vote in directory contests and post without solving a captcha on communities that check it.
 

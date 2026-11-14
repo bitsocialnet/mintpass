@@ -11,6 +11,7 @@
     <meta name="theme-color" content="#e6efec" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a1f21" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/mintpass.png" type="image/png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://mintpass.org/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mintpass.org/" />
@@ -25,7 +26,10 @@
 
     <header class="site-header">
       <a class="brand" href="/" aria-label="MintPass home">
-        <img src="/mintpass.png" alt="" width="30" height="36" />
+        <picture>
+          <source srcset="/mintpass-dark.svg" media="(prefers-color-scheme: dark)" />
+          <img src="/mintpass.svg" alt="" width="40" height="29" />
+        </picture>
         <span>MintPass</span>
       </a>
       <nav aria-label="Sections">
@@ -70,7 +74,7 @@
           <div class="pass pass-5chan" aria-hidden="true">
             <p class="micro">NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE NONTRANSFERABLE</p>
             <span class="punch"></span>
-            <img class="seal" src="/mintpass.png" alt="" width="40" height="48" />
+            <img class="seal" src="/mintpass.svg" alt="" width="40" height="29" />
             <p class="pass-name">5chan Pass</p>
             <p class="pass-issuer">5PASS</p>
             <dl class="pass-fields">

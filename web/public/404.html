@@ -6,12 +6,16 @@
     <title>Page not found: MintPass</title>
     <meta name="robots" content="noindex" />
     <link rel="icon" href="/mintpass.png" type="image/png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="site-header">
       <a class="brand" href="/" aria-label="MintPass home">
-        <img src="/mintpass.png" alt="" width="30" height="36" />
+        <picture>
+          <source srcset="/mintpass-dark.svg" media="(prefers-color-scheme: dark)" />
+          <img src="/mintpass.svg" alt="" width="40" height="29" />
+        </picture>
         <span>MintPass</span>
       </a>
     </header>
