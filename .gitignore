@@ -15,5 +15,5 @@ dist/
 deployments/*-hardhat.json
 deployments/*-hardhat.args.js
 # Left by a record write that was interrupted part-way (scripts/deploy-record.ts).
-deployments/*.json.tmp
+deployments/*.tmp
 .DS_Store

@@ -6,6 +6,7 @@
  */
 import * as fs from "fs";
 import * as path from "path";
+import { randomBytes } from "crypto";
 import { ethers, type ContractFactory, type ContractTransactionReceipt, type Signer } from "ethers";
 
 /** Throws if `file` exists: the pass is deployed, or a deploy was (or may have been) sent and can still land. */
@@ -55,9 +56,11 @@ export function refuseExistingRecord(file: string): void {
  * interrupted update (a full disk, Ctrl-C) leaves the previous record whole instead of a truncated file.
  */
 function writeRecord(file: string, record: Record<string, unknown>): void {
-  const tmp = `${file}.tmp`;
+  // Each write gets its own temp file, created exclusively, so overlapping runs never remove or rename each other's.
+  const tmp = `${file}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
+  // If this open fails, nothing was created, so there is nothing of ours to clean up.
+  const fd = fs.openSync(tmp, "wx");
   try {
-    const fd = fs.openSync(tmp, "w");
     try {
       fs.writeFileSync(fd, JSON.stringify({ ...record, timestamp: new Date().toISOString() }, null, 2) + "\n");
       fs.fsyncSync(fd);
