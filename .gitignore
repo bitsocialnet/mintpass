@@ -18,3 +18,8 @@ deployments/*-hardhat.args.js
 deployments/*.tmp
 .DS_Store
 .vercel/
+
+# Website tooling
+web/.yarn/
+web/.prerender/
+.playwright-cli/
