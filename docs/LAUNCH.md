@@ -11,7 +11,7 @@ This file is public. Keep signer names, signer addresses and any private arrange
 - [ ] Payout Safe exists (see step 1). **Blocks every mainnet deployment.**
 - [ ] 5chan Pass deployed and verified.
 - [ ] Seedit Gold deployed and verified.
-- [ ] mintpass.org redesigned and deployed (PR 29).
+- [ ] mintpass.org deployed (PR 29).
 - [ ] 5chan and Seedit sell the pass and read it for voting.
 
 ## Decisions still open
@@ -123,6 +123,6 @@ The script refuses to deploy the same pass twice. A mistake in the parameters ca
 ## Website (PR 29)
 
 - [x] Bitsocial Forge Inc. attribution removed.
-- [ ] Pick a design direction and rebuild the page around: what a pass is, the live passes, how to deploy your own, link to BSIP-18.
+- [x] Rebuilt as a developer page: known implementations linking to each app's pass page, how it works, interface, deploy your own, link to BSIP-18.
 - [ ] Commit the local `yarn start` preview scripts.
 - [ ] Deploy to Vercel after review.
