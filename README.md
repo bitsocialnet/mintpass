@@ -128,10 +128,10 @@ The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measure
 
 ## Website
 
-`web/` is the static [mintpass.org](https://mintpass.org) site: plain HTML and CSS in `web/public/`, served as-is by the Vercel project `mintpass` (Root Directory `web`, settings in `web/vercel.json`). The root `.vercelignore` uploads only `web/` and never `.env` files. Deploy from a checkout of `master`:
+`web/` is the static [mintpass.org](https://mintpass.org) site: plain HTML and CSS in `web/public/`, served as-is by the Vercel project `mintpass-org` (Root Directory `web`, settings in `web/vercel.json`). Every push to `master` deploys it, except commits marked `[skip ci]`. The root `.vercelignore` uploads only `web/` and never `.env` files. To deploy by hand from a checkout of `master`:
 
 ```sh
-vercel link --yes --project mintpass --scope toms-projects-2188af94   # once per checkout
+vercel link --yes --project mintpass-org --scope toms-projects-2188af94   # once per checkout
 vercel deploy --prod
 ```
 
