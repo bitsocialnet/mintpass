@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 24 100 72" width="100" height="72">
+  <title>MintPass</title>
+  <path fill="#0f6b72" d="M20 24H100A10 10 0 0 1 110 34V51A9 9 0 0 0 110 69V86A10 10 0 0 1 100 96H20A10 10 0 0 1 10 86V69A9 9 0 0 0 10 51V34A10 10 0 0 1 20 24Z"/>
+  <g fill="#9ed8cf">
+    <path d="M60 57C74 50 73 38 60 31C47 38 46 50 60 57Z"/>
+    <path d="M60 57C74 50 73 38 60 31C47 38 46 50 60 57Z" transform="rotate(90 60 60)"/>
+    <path d="M60 57C74 50 73 38 60 31C47 38 46 50 60 57Z" transform="rotate(180 60 60)"/>
+    <path d="M60 57C74 50 73 38 60 31C47 38 46 50 60 57Z" transform="rotate(270 60 60)"/>
+  </g>
+  <path fill="none" stroke="#0f6b72" stroke-width="2.2" stroke-linecap="round" d="M60 55V38M65 60H82M60 65V82M55 60H38"/>
+</svg>
