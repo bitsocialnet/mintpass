@@ -231,7 +231,9 @@ h1 {
 
 .hero-passes {
   position: relative;
-  min-height: 21rem;
+  min-height: 24rem;
+  /* Room for the "Your pass" outline, which hangs below the two passes. */
+  margin-bottom: 5rem;
 }
 
 .pass {
@@ -699,11 +701,6 @@ pre {
 }
 
 /* The third card is an invitation: an empty outline behind the two real passes. */
-.hero-passes {
-  min-height: 24rem;
-  margin-bottom: 5rem;
-}
-
 .pass-yours {
   right: 0;
   bottom: -5rem;

@@ -278,8 +278,12 @@
           </li>
           <li>
             <h3>Deploy and verify.</h3>
-            <p>Proceeds go to your payout address from the first sale. A multisig works.</p>
-            <pre><code>DEPLOYMENT=my-pass PAYOUT_ADDRESS=0x... DRY_RUN=0 DEPLOYER_PRIVATE_KEY=0x... yarn deploy --network mainnet</code></pre>
+            <p>
+              The deploy writes the constructor arguments to <code>deployments/</code>; verify on Etherscan with them. Proceeds go
+              to your payout address from the first sale. A multisig works.
+            </p>
+            <pre><code>DEPLOYMENT=my-pass PAYOUT_ADDRESS=0x... DRY_RUN=0 DEPLOYER_PRIVATE_KEY=0x... yarn deploy --network mainnet
+yarn hardhat verify --network mainnet --constructor-args deployments/my-pass-mainnet.args.js &lt;address&gt;</code></pre>
           </li>
           <li>
             <h3>Point your app at it.</h3>
