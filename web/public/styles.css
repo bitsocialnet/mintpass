@@ -44,6 +44,8 @@
   --seedit-card: #1f1f1f;
   --seedit-gold: #c8a12c;
   --seedit-gold-dim: #6b5a26;
+  --code-bg: #0c2a2e;
+  --code-ink: #d6efe9;
 
   --font: "Exo", system-ui, sans-serif;
   --mono: "Spline Sans Mono", ui-monospace, monospace;
@@ -62,6 +64,7 @@
     --teal: #5cc3bb;
     --rule: rgba(92, 195, 187, 0.22);
     --focus: #9ed8cf;
+    --code-bg: #051315;
     color-scheme: dark;
   }
 }
@@ -632,4 +635,365 @@ details p {
 
 .hero-plain {
   grid-template-columns: 1fr;
+}
+
+/* ---------- Developer page ---------- */
+
+code,
+pre {
+  font-family: var(--mono);
+  font-size: 0.88em;
+}
+
+:not(pre) > code {
+  padding: 0.08em 0.32em;
+  border-radius: 4px;
+  background: var(--rule);
+  overflow-wrap: anywhere;
+}
+
+pre {
+  margin: 0.75rem 0 0;
+  padding: 0.9rem 1.1rem;
+  border-radius: 10px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  overflow-x: auto;
+  line-height: 1.55;
+}
+
+.eyebrow {
+  margin: 0 0 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.6rem 1.15rem;
+  border: 2px solid var(--teal);
+  border-radius: 999px;
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 120ms ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button.primary {
+  background: var(--teal);
+  color: var(--paper);
+}
+
+/* The third card is an invitation: an empty outline behind the two real passes. */
+.hero-passes {
+  min-height: 24rem;
+  margin-bottom: 5rem;
+}
+
+.pass-yours {
+  right: 0;
+  bottom: -5rem;
+  transform: rotate(1.5deg);
+  border: 2px dashed var(--teal);
+  color: var(--teal);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 0.8rem;
+  text-align: right;
+  z-index: 0;
+}
+
+.pass-yours .pass-name,
+.pass-yours .pass-issuer {
+  grid-column: 1 / -1;
+}
+
+.pass-seedit {
+  top: 0;
+}
+
+.pass-5chan {
+  bottom: 0;
+}
+
+.traits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper-raised);
+  overflow: hidden;
+}
+
+.traits li {
+  padding: 1.1rem 1.25rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  box-shadow: 1px 0 0 var(--rule), 0 1px 0 var(--rule);
+}
+
+.traits strong {
+  display: block;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.traits + .block {
+  border-top: 0;
+  margin-top: 1rem;
+}
+
+.impl-grid,
+.uses,
+.flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+}
+
+.impl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 1.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+}
+
+.impl header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.impl h3 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.symbol {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.impl p {
+  margin: 0;
+}
+
+.impl dl {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.impl dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid currentColor;
+  border-top-color: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.impl dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+
+.impl .button {
+  margin-top: auto;
+  align-self: flex-start;
+  border-color: currentColor;
+  color: inherit;
+}
+
+.impl-5chan {
+  background: var(--fivechan-paper);
+  color: var(--fivechan-ink);
+  border-color: transparent;
+}
+
+.impl-seedit {
+  background: var(--seedit-card);
+  color: var(--seedit-gold);
+  border-color: var(--seedit-gold-dim);
+}
+
+.impl-yours {
+  background: transparent;
+  border: 2px dashed var(--teal);
+  color: var(--ink-soft);
+}
+
+.impl-yours h3,
+.impl-yours .symbol {
+  color: var(--teal);
+}
+
+.flow {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+}
+
+.flow li {
+  min-width: 0;
+  padding: 1.25rem 1.25rem 1.4rem;
+  border-top: 5px solid var(--teal);
+  background: var(--paper-raised);
+  border-radius: 0 0 14px 14px;
+}
+
+.flow p,
+.uses p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.flow-step {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.timeline {
+  margin-top: 2.5rem;
+  max-width: 44rem;
+}
+
+.timeline-title {
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+
+.track {
+  display: grid;
+  grid-template-columns: 5fr 2fr 4fr;
+  gap: 3px;
+}
+
+.seg {
+  padding: 0.5rem 0.75rem;
+  font-family: var(--mono);
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.seg.on {
+  background: var(--teal);
+  color: var(--paper);
+}
+
+.seg.off {
+  border: 2px dashed var(--teal);
+  color: var(--teal);
+}
+
+.marks {
+  display: grid;
+  grid-template-columns: 5fr 2fr 4fr;
+  gap: 3px;
+  margin-top: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.timeline-note {
+  margin: 1rem 0 0;
+  color: var(--ink-soft);
+}
+
+.uses article {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.uses h3 {
+  margin: 0;
+}
+
+.badge {
+  padding: 0.1rem 0.6rem;
+  border: 1px dashed var(--teal);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.badge.live {
+  border-style: solid;
+  background: var(--teal);
+  color: var(--paper);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-wrap table {
+  max-width: none;
+  min-width: 34rem;
+}
+
+.table-wrap td:first-child {
+  color: var(--ink);
+  width: 45%;
+}
+
+.steps li > * {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.steps li::before {
+  grid-column: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}
+
+@media (max-width: 52rem) {
+  .hero-passes {
+    height: min(22rem, 80vw);
+  }
 }
