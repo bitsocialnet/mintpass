@@ -1,28 +1,42 @@
-# MintPass
+<div align="center">
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="public/mintpass-dark.png" />
-  <img src="public/mintpass.png" alt="MintPass logo" width="100" align="left" />
+  <img src="public/mintpass.png" alt="MintPass logo" width="100" />
 </picture>
 
-MintPass is a paid, non-transferable, expiring pass on Ethereum mainnet. Each Bitsocial app deploys its own MintPass: **5chan Pass** for [5chan](https://github.com/bitsocialnet/5chan) and **Seedit Gold** for [Seedit](https://github.com/bitsocialnet/seedit). Holding a valid pass lets its holder vote in directory contests and post without solving a captcha on communities that check it.
+# MintPass
 
-<br clear="left" />
+A paid, non-transferable, expiring pass on Ethereum mainnet.
 
-- The price is fixed in USD and paid in ETH, converted with the Chainlink ETH/USD feed. Nobody has to update prices by hand, and no stablecoin is involved.
-- Anyone can buy for any address: `purchase(to, planId)`. The payer (for example MetaMask) and the holder (for example a 5chan account's built-in address) can differ. Excess ETH is refunded to the payer.
-- Each address holds at most one token. Buying again for the same address renews that token; it never mints a second one. A pass can be paid up at most 10 years ahead.
-- The token is locked forever (ERC-5192). It cannot be transferred, approved or burned. There is no admin mint.
-- Proceeds go straight to a payout address. Changing the payout address is the only privileged action, and it takes two steps.
+[Website](https://mintpass.org) · [Contract](contracts/MintPass.sol) · [Deploy config](deploy/config.ts)
 
-Plans (both deployments): 365 days for $30, and 3 × 365 days for $60.
+</div>
+
+Each Bitsocial app deploys its own MintPass: **5chan Pass** for [5chan](https://github.com/bitsocialnet/5chan) and **Seedit Gold** for [Seedit](https://github.com/bitsocialnet/seedit). Holding a valid pass lets its holder vote in directory contests and post without solving a captcha on communities that check it.
+
+- **Priced in USD, paid in ETH.** The price is converted with the Chainlink ETH/USD feed. Nobody has to update prices by hand, and no stablecoin is involved.
+- **Anyone can buy for any address.** Call `purchase(to, planId)`. The payer (for example MetaMask) and the holder (for example a 5chan account's built-in address) can differ. Excess ETH is refunded to the payer.
+- **One token per address.** Buying again for the same address renews that token; it never mints a second one. A pass can be paid up at most 10 years ahead.
+- **Locked forever (ERC-5192).** The token cannot be transferred, approved or burned. There is no admin mint.
+- **Direct payouts.** Proceeds go straight to a payout address. Changing the payout address is the only privileged action, and it takes two steps.
+
+## Deployments
 
 | Deployment | Name | Symbol | Address |
 | --- | --- | --- | --- |
 | `5chan-pass` | 5chan Pass | `5PASS` | not deployed yet |
 | `seedit-gold` | Seedit Gold | `SGOLD` | not deployed yet |
 
-MintPass v1 (2025) minted a testnet NFT after SMS phone verification and shipped the `@bitsocial/mintpass-challenge` package. That approach is retired and the package is deprecated; its code remains in this repository's git history. Free posting now uses [`@bitsocial/evm-contract-challenge`](https://github.com/bitsocialnet/evm-contract-challenge) against a MintPass.
+Both deployments sell the same plans:
+
+| Plan | Duration | Price |
+| --- | --- | --- |
+| 0 | 365 days | $30 |
+| 1 | 3 × 365 days | $60 |
+
+> [!NOTE]
+> MintPass v1 (2025) minted a testnet NFT after SMS phone verification and shipped the `@bitsocial/mintpass-challenge` package. That approach is retired and the package is deprecated; its code remains in this repository's git history. Free posting now uses [`@bitsocial/evm-contract-challenge`](https://github.com/bitsocialnet/evm-contract-challenge) against a MintPass.
 
 ## Why `balanceOf` reflects expiry
 
@@ -50,11 +64,11 @@ Other consequences to keep in mind:
 | `balanceOf`, `ownerOf`, `locked`, `supportsInterface`, `tokenURI` | ERC-721 + ERC-5192. `tokenURI` returns on-chain JSON (a base64 data URI) with an `expiresAt` attribute. |
 | `proposePayout(address)`, `acceptPayout()`, `pendingPayout()` | **The only privileged action.** The current payout proposes a new address (emits `PayoutProposed`); nothing changes until that address calls `acceptPayout` (emits `PayoutChanged`). A new proposal replaces a pending one. |
 
-`purchase` and `quote` revert when:
+`purchase` and `quote` revert when the feed's:
 
-- the feed answer is `<= 0`;
+- answer is `<= 0`;
 - `updatedAt` is 0 or in the future;
-- the answer is older than `maxStaleness`.
+- answer is older than `maxStaleness`.
 
 ## Develop
 
@@ -74,7 +88,10 @@ On every compile, solc prints one warning about transient storage. It comes from
 
 ## Deploy
 
-Parameters live in `deploy/config.ts`: names, symbols, plans, feed addresses and staleness bounds. The deploy script reads the deployer key only from `DEPLOYER_PRIVATE_KEY`. **It is a dry run unless you set `DRY_RUN=0`.**
+Parameters live in `deploy/config.ts`: names, symbols, plans, feed addresses and staleness bounds. The deploy script reads the deployer key only from `DEPLOYER_PRIVATE_KEY`.
+
+> [!IMPORTANT]
+> The deploy script is a dry run unless you set `DRY_RUN=0`.
 
 ```sh
 # Dry run. Reads the live feed, simulates the constructor, estimates gas and cost, sends nothing.
@@ -93,7 +110,13 @@ yarn hardhat verify --network mainnet --constructor-args deployments/5chan-pass-
 | mainnet | `0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419` | 7200 s (two 1 h heartbeats) |
 | sepolia | `0x694AA1769357215DE4FAC081bf1f309aDC325306` | 86400 s (testnet feeds are less reliable) |
 
-A real deploy writes `deployments/<deployment>-<network>.json` and an `.args.js` file for verification, both before it sends the transaction. The record starts with status `broadcasting`, the deployer nonce and the address the contract will get, and becomes `deployed` after two confirmations. On mainnet and sepolia the script refuses to deploy a pass that already has a record. If a run stops while the record is still `broadcasting`, only the deployer's transaction with the recorded nonce can put a contract at the recorded address, and another pass deployed from the same key takes that nonce too, as does this pass sent with other values. So neither code at the address nor a matching name is enough; the script's refusal message spells out the cases:
+### Deployment records
+
+A real deploy writes `deployments/<deployment>-<network>.json` and an `.args.js` file for verification, both before it sends the transaction. The record starts with status `broadcasting`, the deployer nonce and the address the contract will get, and becomes `deployed` after two confirmations. On mainnet and sepolia the script refuses to deploy a pass that already has a record.
+
+### Recovering an interrupted deploy
+
+If a run stops while the record is still `broadcasting`, only the deployer's transaction with the recorded nonce can put a contract at the recorded address. Another pass deployed from the same key takes that nonce too, as does this pass sent with other values. So neither code at the address nor a matching name is enough; the script's refusal message spells out the cases:
 
 - The nonce is used and the address holds this pass deployed with every recorded value: `name()`, `symbol()`, `priceFeed()`, `maxStaleness()` and `plans()` match the record's `constructorArgs`, and so does the initial payout. The payout can be rotated after deploying, so the initial payout is the `previousPayout` of the contract's first `PayoutChanged` event, or `payout()` if there is none. That is the deployment. Keep the record.
 - The nonce is used and the address has no code, holds another contract, or holds this pass deployed with any other value, such as another initial payout: this deploy can never land. Delete the record and deploy again.
@@ -148,7 +171,8 @@ vercel deploy --prod
 - **Griefing via `to`.** Minting uses `_mint`, not `_safeMint`, so it never calls into `to`. Gifts and renewals by third parties only add time, up to `MAX_PREPAID`.
 - **Deploy safety.** `test/config.test.ts` pins the deploy parameters; the deploy script saves its record, with the contract's address, before it sends the deploy transaction, refuses a second live deployment of the same pass, and checks every plan on-chain afterwards.
 
-The contract has not had an external audit.
+> [!CAUTION]
+> The contract has not had an external audit.
 
 ## License
 
