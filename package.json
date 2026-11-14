@@ -18,7 +18,11 @@
     "typecheck": "tsc --noEmit",
     "deploy": "hardhat run scripts/deploy.ts",
     "deploy:fork": "FORK_URL=${FORK_URL:-${MAINNET_RPC_URL:-https://ethereum-rpc.publicnode.com}} hardhat run scripts/deploy.ts --network hardhat",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "start": "yarn --cwd web start",
+    "build:web": "yarn --cwd web build",
+    "check:web": "yarn --cwd web agent:verify",
+    "test:workflow": "node --test scripts/tests/*.test.mjs"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.6.1"

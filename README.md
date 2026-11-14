@@ -154,10 +154,24 @@ The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measure
 
 ## Website
 
-`web/` is the static [mintpass.org](https://mintpass.org) site: plain HTML and CSS in `web/public/`, served as-is by the Vercel project `mintpass-org` (Root Directory `web`, settings in `web/vercel.json`). Pushes to `master` deploy it. The root `.vercelignore` uploads only `web/` and never `.env` files. To deploy by hand from a checkout of `master`:
+`web/` is the React + Vite + strict TypeScript source for [mintpass.org](https://mintpass.org). It is an independent Yarn 4 project with its own lockfile.
 
 ```sh
-vercel link --yes --project mintpass-org --scope toms-projects-2188af94   # once per checkout
+cd web
+corepack yarn install --immutable
+yarn start
+```
+
+`yarn start` opens `https://mintpass.localhost` through Portless. Linked worktrees get a branch-prefixed URL. `BROWSER=none yarn start` skips browser opening; `PORTLESS=0 yarn start` runs Vite directly. From the repository root, first install the website dependencies with `corepack yarn --cwd web install --immutable`; then `yarn start` delegates to the website.
+
+Agentation and element-source run only in development. Agentation provides visual annotations, while `window.__ELEMENT_SOURCE__.resolveElementInfo(element)` maps DOM elements back to React source. `yarn agent:verify` runs lint, formatting, strict type checking, the production build, and React Doctor. Shared agent skills are in `.agents/skills/`, with website guidance in `web/AGENTS.md`.
+
+`yarn build` produces `web/dist/` with pre-rendered home and 404 pages and hydrates them in the browser. `yarn preview` serves that build locally. Vercel's `mintpass-org` project uses Root Directory `web`, the pinned Yarn install/build commands in `web/vercel.json`, and output directory `dist`. Existing retired-route redirects and security headers are preserved. Pushes to `master` deploy it. The root `.vercelignore` uploads only `web/` and excludes environment files.
+
+To deploy by hand from a checkout of `master`:
+
+```sh
+vercel link --yes --project mintpass-org --scope toms-projects-2188af94
 vercel deploy --prod
 ```
 
