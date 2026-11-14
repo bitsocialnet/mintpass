@@ -2689,10 +2689,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinypool@npm:2.0.0":
-  version: 2.0.0
-  resolution: "tinypool@npm:2.0.0"
-  checksum: 10c0/3888cc668cdbb1bc85e1b58587897501254ffc5de52cf4e0d30936869922a4eaf2f085ce10562122df3eb7536cbf3d29ecc2faba37656933649d1d2f5bc9bff7
+"tinypool@npm:2.1.2":
+  version: 2.1.2
+  resolution: "tinypool@npm:2.1.2"
+  checksum: 10c0/4d8c0cf2d9710eff4aa9cb4318fecaac09d847f1d7dce3eb314d36bea35ed23f754315592a3c00c1d0aa21d9eb4a1f69e84c69feb8517b4cd769e1e0a7ee308e
   languageName: node
   linkType: hard
 
