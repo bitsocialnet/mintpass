@@ -162,7 +162,7 @@ corepack yarn install --immutable
 yarn start
 ```
 
-`yarn start` opens `https://mintpass.localhost` through Portless. Linked worktrees get a branch-prefixed URL. `BROWSER=none yarn start` skips browser opening; `PORTLESS=0 yarn start` runs Vite directly. From the repository root, `yarn start` delegates to the website too, after installing its dependencies.
+`yarn start` opens `https://mintpass.localhost` through Portless. Linked worktrees get a branch-prefixed URL. `BROWSER=none yarn start` skips browser opening; `PORTLESS=0 yarn start` runs Vite directly. From the repository root, first install the website dependencies with `corepack yarn --cwd web install --immutable`; then `yarn start` delegates to the website.
 
 Agentation and element-source run only in development. Agentation provides visual annotations, while `window.__ELEMENT_SOURCE__.resolveElementInfo(element)` maps DOM elements back to React source. `yarn agent:verify` runs lint, formatting, strict type checking, the production build, and React Doctor. Shared agent skills are in `.agents/skills/`, with website guidance in `web/AGENTS.md`.
 
