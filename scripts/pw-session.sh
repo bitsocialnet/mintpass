@@ -36,11 +36,11 @@ One browser slot is shared by every worktree and repository on this machine.
   open     Acquire the slot, then start the browser. Exits 75 when the slot is
            held by a live session; --wait polls until it frees (default 300s).
            A slot whose browser is gone is reclaimed automatically.
-  close    Stop the named browser, then release the slot. Always attempts the
-           browser close, even when the lock was already lost, and never
-           releases a slot held by a different session.
+  close    Stop the named browser, then release its slot after checking ownership.
+           A failed close keeps the reservation. Retry after initialization or
+           another reservation operation finishes.
   status   Report the holder and whether its browser is still running.
-  release  Drop a lock without closing a browser. Normal cleanup uses `close`.
+  release  Drop a stopped browser's lock. Normal cleanup uses `close`.
 EOF
 }
 
@@ -64,6 +64,41 @@ owner_file="$lock_dir/owner"
 started_file="$lock_dir/started-at"
 workspace_file="$lock_dir/workspace"
 launcher_file="$lock_dir/launcher-pid"
+guard_dir="${lock_dir}.guard"
+guard_held=false
+
+# Serialize every reservation mutation, including its preceding liveness or
+# ownership check. Never reclaim this short-lived guard by pathname: a crashed
+# guard fails closed and requires manual removal after its process has stopped.
+# This avoids introducing the same check/delete race in the mutex itself.
+unlock_guard() {
+  if [ "$guard_held" = true ]; then
+    rm -f "$guard_dir/pid"
+    rmdir "$guard_dir"
+    guard_held=false
+  fi
+}
+trap unlock_guard EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+try_guard() {
+  mkdir -p "$(dirname "$lock_dir")"
+  if ! mkdir "$guard_dir" 2>/dev/null; then
+    return 75
+  fi
+  guard_held=true
+  printf '%s\n' "$$" >"$guard_dir/pid"
+}
+
+require_guard() {
+  if ! try_guard; then
+    echo "pw-session: another reservation operation holds $guard_dir; retry later" >&2
+    echo "pw-session: if abandoned, confirm its recorded process has stopped before removing the guard" >&2
+    return 1
+  fi
+}
 default_wait_seconds=300
 poll_seconds="${PW_SESSION_POLL_SECONDS:-5}"
 
@@ -146,6 +181,10 @@ lock_state() {
 print_status() {
   local owner started held_workspace state
 
+  if [ -d "$guard_dir" ]; then
+    echo "pw-session: reservation operation in progress at $guard_dir"
+    return 0
+  fi
   if [ ! -d "$lock_dir" ]; then
     echo "pw-session: browser slot is available"
     return 0
@@ -180,45 +219,35 @@ print_status() {
   esac
 }
 
-# Atomically drop a lock we have confirmed is stale. Renaming first means only
-# one racing reclaimer can win, so a concurrent fresh lock is never deleted.
+# Called only while holding the guard used by acquisition and release.
 reclaim_stale_lock() {
-  local owner="$1" staged="${lock_dir}.stale.$$"
-
-  if mv "$lock_dir" "$staged" 2>/dev/null; then
-    rm -rf "$staged"
-    echo "pw-session: reclaimed stale slot from '$owner' (its browser is no longer running)" >&2
-  fi
+  local owner="$1"
+  rm -rf "$lock_dir"
+  echo "pw-session: reclaimed stale slot from '$owner' (its browser is no longer running)" >&2
 }
 
 acquire() {
-  local session="$1" wait_seconds="$2" owner state reclaims=0
+  local session="$1" wait_seconds="$2" owner state
 
   validate_session "$session"
-  mkdir -p "$(dirname "$lock_dir")"
-
   SECONDS=0
   while true; do
-    if mkdir "$lock_dir" 2>/dev/null; then
-      write_lock_metadata "$session"
-      echo "pw-session: acquired browser slot for '$session'"
-      return 0
-    fi
-
-    owner="$(current_owner)"
-    state="$(lock_state "$owner")"
-
-    # Bounded so an unremovable lock directory fails loudly instead of spinning.
-    if [ "$state" = dead ] && [ "$reclaims" -lt 3 ]; then
-      reclaims=$((reclaims + 1))
-      reclaim_stale_lock "${owner:-unknown}"
-      continue
-    fi
-
-    if [ "$state" = dead ]; then
-      print_status >&2
-      echo "pw-session: could not reclaim the stale slot at $lock_dir; remove it by hand" >&2
-      return 75
+    owner='another reservation operation'
+    if try_guard; then
+      if [ -d "$lock_dir" ]; then
+        owner="$(current_owner)"
+        state="$(lock_state "$owner")"
+        if [ "$state" = dead ]; then
+          reclaim_stale_lock "${owner:-unknown}"
+        fi
+      fi
+      if mkdir "$lock_dir" 2>/dev/null; then
+        write_lock_metadata "$session"
+        unlock_guard
+        echo "pw-session: acquired browser slot for '$session'"
+        return 0
+      fi
+      unlock_guard
     fi
 
     if [ "$wait_seconds" -gt 0 ] && [ "$SECONDS" -lt "$wait_seconds" ]; then
@@ -227,12 +256,13 @@ acquire() {
       continue
     fi
 
-    print_status >&2
-    if [ "$wait_seconds" -gt 0 ]; then
-      echo "pw-session: gave up after ${wait_seconds}s; do not bypass the lock" >&2
+    if [ -d "$guard_dir" ]; then
+      echo "pw-session: reservation operation in progress at $guard_dir; retry later" >&2
+      echo "pw-session: if abandoned, confirm its recorded process has stopped before removing the guard" >&2
     else
-      echo "pw-session: another browser workflow is active; do not bypass the lock" >&2
+      print_status >&2
     fi
+    echo "pw-session: browser slot unavailable; do not bypass the lock" >&2
     return 75
   done
 }
@@ -313,10 +343,16 @@ case "$command" in
     # Guarded expansion: Bash 3.2 (macOS /bin/bash) errors on an empty array
     # under `set -u`.
     if ! "$playwright_cli" -s="$session" open ${open_args[@]+"${open_args[@]}"}; then
+      require_guard
+      if ! "$playwright_cli" -s="$session" close; then
+        echo "pw-session: could not close browser '$session'; keeping its reservation" >&2
+        exit 1
+      fi
       release "$session"
       exit 1
     fi
-    rm -f "$launcher_file"
+    # Keep the launcher PID until this command exits, protecting the remaining
+    # setup as well. Once it exits, liveness comes from the browser listing.
 
     # Hide the dev-only Agentation toolbar so annotations cannot intercept driven clicks.
     # Source inspection remains available; profiling/visual-testing flags stay untouched.
@@ -339,18 +375,23 @@ case "$command" in
     fi
     validate_session "$session"
 
-    # Cleanup must always stop the browser, even when the lock was lost, so a
-    # failed workflow cannot strand a running engine.
+    # Keep ownership validation, browser shutdown, and release in one operation.
+    require_guard
     owner="$(current_owner)"
     held_workspace="$(cat "$workspace_file" 2>/dev/null || true)"
     if [ "$owner" = "$session" ] && [ "$held_workspace" != "$workspace" ]; then
       echo "pw-session: refusing to close a session owned by another workspace" >&2
       exit 1
     fi
+    if [ "$owner" = "$session" ] && [ "$(lock_state "$owner")" = initializing ]; then
+      echo "pw-session: browser '$session' is still starting; retry close after open finishes" >&2
+      exit 1
+    fi
     close_status=0
     "$playwright_cli" -s="$session" close || close_status=$?
     if [ "$close_status" -ne 0 ]; then
-      echo "pw-session: warning: closing browser '$session' exited $close_status" >&2
+      echo "pw-session: closing browser '$session' exited $close_status; keeping its reservation" >&2
+      exit "$close_status"
     fi
 
     if [ -z "$owner" ]; then
@@ -372,6 +413,12 @@ case "$command" in
     session="${2:-}"
     if [ -z "$session" ] || [ "$#" -ne 2 ]; then
       usage >&2
+      exit 1
+    fi
+    validate_session "$session"
+    require_guard
+    if [ -d "$lock_dir" ] && [ "$(lock_state "$(current_owner)")" != dead ]; then
+      echo "pw-session: refusing to release a running or unverifiable browser; use close" >&2
       exit 1
     fi
     release "$session"
