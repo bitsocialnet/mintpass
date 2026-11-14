@@ -57,7 +57,7 @@ Other consequences to keep in mind:
 
 ```sh
 yarn install
-yarn test          # 72 unit tests (the fork test is skipped)
+yarn test          # 78 unit tests (the fork test is skipped)
 yarn test:fork     # mainnet-fork test against the real feed (FORK_TEST_RPC_URL, default publicnode)
 yarn gas           # deterministic gas numbers
 yarn test:gas      # hardhat-gas-reporter over the unit tests
@@ -90,7 +90,11 @@ yarn hardhat verify --network mainnet --constructor-args deployments/5chan-pass-
 | mainnet | `0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419` | 7200 s (two 1 h heartbeats) |
 | sepolia | `0x694AA1769357215DE4FAC081bf1f309aDC325306` | 86400 s (testnet feeds are less reliable) |
 
-A real deploy writes `deployments/<deployment>-<network>.json` and an `.args.js` file for verification.
+A real deploy writes `deployments/<deployment>-<network>.json` and an `.args.js` file for verification, both before it sends the transaction. The record starts with status `broadcasting`, the deployer nonce and the address the contract will get, and becomes `deployed` after two confirmations. On mainnet and sepolia the script refuses to deploy a pass that already has a record. If a run stops while the record is still `broadcasting`, only the deployer's transaction with the recorded nonce can put a contract at the recorded address, and another pass deployed from the same key takes that nonce too, as does this pass sent with other values. So neither code at the address nor a matching name is enough; the script's refusal message spells out the cases:
+
+- The nonce is used and the address holds this pass deployed with every recorded value: `name()`, `symbol()`, `priceFeed()`, `maxStaleness()` and `plans()` match the record's `constructorArgs`, and so does the initial payout. The payout can be rotated after deploying, so the initial payout is the `previousPayout` of the contract's first `PayoutChanged` event, or `payout()` if there is none. That is the deployment. Keep the record.
+- The nonce is used and the address has no code, holds another contract, or holds this pass deployed with any other value, such as another initial payout: this deploy can never land. Delete the record and deploy again.
+- The nonce is not used yet: the deploy can still land. Wait for it, or use up the nonce with a 0 ETH transfer from the deployer to itself at that nonce, and delete the record once that transfer is mined. Deploying the other pass from the same key also uses that nonce.
 
 ## Gas
 
@@ -130,7 +134,7 @@ The real Chainlink proxy adds about 5.5k gas per purchase. The fork test measure
 - **Stale and invalid oracle data.** Covered by the revert conditions above.
 - **Transfer, approve and burn paths.** None exist: `_update` only allows mints, and `approve` and `setApprovalForAll` revert.
 - **Griefing via `to`.** Minting uses `_mint`, not `_safeMint`, so it never calls into `to`. Gifts and renewals by third parties only add time, up to `MAX_PREPAID`.
-- **Deploy safety.** `test/config.test.ts` pins the deploy parameters; the deploy script saves its record right after the receipt, refuses a second live deployment of the same pass, and checks every plan on-chain afterwards.
+- **Deploy safety.** `test/config.test.ts` pins the deploy parameters; the deploy script saves its record, with the contract's address, before it sends the deploy transaction, refuses a second live deployment of the same pass, and checks every plan on-chain afterwards.
 
 The contract has not had an external audit.
 

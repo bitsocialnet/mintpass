@@ -18,6 +18,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { ethers, network } from "hardhat";
 import { DEPLOYMENTS, NETWORKS, type DeploymentKey, type TargetNetwork } from "../deploy/config";
+import { deployAndRecord, refuseExistingRecord } from "./deploy-record";
 
 const feedAbi = [
   "function decimals() view returns (uint8)",
@@ -116,47 +117,29 @@ async function main() {
 
   if (!deployer) fail("DEPLOYER_PRIVATE_KEY is required when DRY_RUN=0");
 
-  // A saved record means this deployment already exists; refuse to create a second contract.
+  // A saved record means this deployment exists or may exist; refuse to create a second contract.
   const outDir = path.join(__dirname, "..", "deployments");
   const base = path.join(outDir, `${deploymentKey}-${network.name}`);
-  if (!isLocal && fs.existsSync(`${base}.json`)) {
-    fail(`${path.relative(process.cwd(), `${base}.json`)} exists: ${deploymentKey} is already deployed on ${network.name}`);
-  }
+  if (!isLocal) refuseExistingRecord(`${base}.json`);
   const balance = await provider.getBalance(deployer.address);
   if (balance < gas * maxFeePerGas) {
     console.log(`WARNING: deployer balance ${ethers.formatEther(balance)} ETH may not cover the deploy`);
   }
 
-  const contract = await factory.connect(deployer).deploy(...constructorArgs);
-  const tx = contract.deploymentTransaction()!;
-  console.log(`\ntx              ${tx.hash}`);
-  const receipt = await tx.wait(isLocal ? 1 : 2);
-  const address = await contract.getAddress();
-  console.log(`address         ${address}`);
-  console.log(`gas used        ${receipt!.gasUsed}`);
-
-  // Record the deployment before anything else can fail, so a later error never hides it.
+  // The verify arguments are known now; save them before sending so a run that dies later still leaves them.
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(
-    `${base}.json`,
-    JSON.stringify(
-      {
-        contract: "MintPass",
-        deployment: deploymentKey,
-        network: network.name,
-        chainId,
-        address,
-        txHash: tx.hash,
-        blockNumber: receipt!.blockNumber,
-        deployer: deployer.address,
-        constructorArgs,
-        timestamp: new Date().toISOString(),
-      },
-      null,
-      2,
-    ) + "\n",
-  );
   fs.writeFileSync(`${base}.args.js`, `module.exports = ${JSON.stringify(constructorArgs, null, 2)};\n`);
+  const { address, receipt } = await deployAndRecord({
+    file: `${base}.json`,
+    factory,
+    args: [...constructorArgs],
+    deployer,
+    confirmations: isLocal ? 1 : 2,
+    fields: { contract: "MintPass", deployment: deploymentKey, network: network.name, chainId },
+    log: console.log,
+  });
+  console.log(`address         ${address}`);
+  console.log(`gas used        ${receipt.gasUsed}`);
   console.log(`saved           ${base}.json`);
 
   // --- Post-deploy checks ----------------------------------------------------------------------
