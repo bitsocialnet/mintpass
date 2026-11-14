@@ -63,6 +63,7 @@ fi
 owner_file="$lock_dir/owner"
 started_file="$lock_dir/started-at"
 workspace_file="$lock_dir/workspace"
+launcher_file="$lock_dir/launcher-pid"
 default_wait_seconds=300
 poll_seconds="${PW_SESSION_POLL_SECONDS:-5}"
 
@@ -116,9 +117,30 @@ session_state() {
 }
 
 write_lock_metadata() {
+  printf '%s\n' "$$" >"$launcher_file"
   printf '%s\n' "$1" >"$owner_file"
   date -u '+%Y-%m-%dT%H:%M:%SZ' >"$started_file"
   printf '%s\n' "$workspace" >"$workspace_file"
+}
+
+# A new lock can be visible before its metadata, and the browser is not listed
+# until `open` finishes. Neither window means that the owner has died.
+lock_state() {
+  local owner="$1" launcher modified now
+  launcher="$(cat "$launcher_file" 2>/dev/null || true)"
+  if [[ "$launcher" =~ ^[0-9]+$ ]] && kill -0 "$launcher" 2>/dev/null; then
+    echo initializing
+  elif [ -z "$owner" ]; then
+    modified="$(stat -c %Y "$lock_dir" 2>/dev/null || stat -f %m "$lock_dir" 2>/dev/null || true)"
+    now="$(date +%s)"
+    if [[ "$modified" =~ ^[0-9]+$ ]] && [ "$((now - modified))" -ge 60 ]; then
+      echo dead
+    else
+      echo initializing
+    fi
+  else
+    session_state "$owner"
+  fi
 }
 
 print_status() {
@@ -132,10 +154,11 @@ print_status() {
   owner="$(current_owner)"
   started="$(sed -n '1p' "$started_file" 2>/dev/null || true)"
   held_workspace="$(sed -n '1p' "$workspace_file" 2>/dev/null || true)"
-  state="$([ -n "$owner" ] && session_state "$owner" || echo unknown)"
+  state="$(lock_state "$owner")"
 
   case "$state" in
     live) echo "pw-session: browser slot is held" ;;
+    initializing) echo "pw-session: browser slot is being initialized" ;;
     dead) echo "pw-session: browser slot is held by a stale lock" ;;
     *) echo "pw-session: browser slot is held (browser state unverifiable)" ;;
   esac
@@ -147,6 +170,7 @@ print_status() {
 
   case "$state" in
     live) echo "Browser: running" ;;
+    initializing) echo "Browser: starting — the slot remains held" ;;
     dead)
       echo "Browser: not running — the next 'open' reclaims this slot automatically"
       ;;
@@ -182,7 +206,7 @@ acquire() {
     fi
 
     owner="$(current_owner)"
-    state="$([ -n "$owner" ] && session_state "$owner" || echo dead)"
+    state="$(lock_state "$owner")"
 
     # Bounded so an unremovable lock directory fails loudly instead of spinning.
     if [ "$state" = dead ] && [ "$reclaims" -lt 3 ]; then
@@ -214,7 +238,7 @@ acquire() {
 }
 
 release() {
-  local session="$1" owner
+  local session="$1" owner held_workspace
 
   validate_session "$session"
   if [ ! -d "$lock_dir" ]; then
@@ -223,6 +247,11 @@ release() {
   fi
 
   owner="$(current_owner)"
+  held_workspace="$(cat "$workspace_file" 2>/dev/null || true)"
+  if [ "$held_workspace" != "$workspace" ]; then
+    echo "pw-session: refusing to release a slot owned by another workspace" >&2
+    return 1
+  fi
   if [ "$owner" != "$session" ]; then
     echo "pw-session: '$session' cannot release the slot held by '${owner:-unknown}'" >&2
     if [ -n "$owner" ] && [ "$(session_state "$owner")" = dead ]; then
@@ -231,7 +260,7 @@ release() {
     return 1
   fi
 
-  rm -f "$owner_file" "$started_file" "$workspace_file"
+  rm -f "$owner_file" "$started_file" "$workspace_file" "$launcher_file"
   rmdir "$lock_dir"
   echo "pw-session: released browser slot for '$session'"
 }
@@ -287,6 +316,7 @@ case "$command" in
       release "$session"
       exit 1
     fi
+    rm -f "$launcher_file"
 
     # Hide the dev-only Agentation toolbar so annotations cannot intercept driven clicks.
     # Source inspection remains available; profiling/visual-testing flags stay untouched.
@@ -312,6 +342,11 @@ case "$command" in
     # Cleanup must always stop the browser, even when the lock was lost, so a
     # failed workflow cannot strand a running engine.
     owner="$(current_owner)"
+    held_workspace="$(cat "$workspace_file" 2>/dev/null || true)"
+    if [ "$owner" = "$session" ] && [ "$held_workspace" != "$workspace" ]; then
+      echo "pw-session: refusing to close a session owned by another workspace" >&2
+      exit 1
+    fi
     close_status=0
     "$playwright_cli" -s="$session" close || close_status=$?
     if [ "$close_status" -ne 0 ]; then

@@ -14,5 +14,6 @@ MintPass is one Solidity contract (`contracts/MintPass.sol`) deployed once per B
 
 - Website work follows [web/AGENTS.md](web/AGENTS.md). The website is an independent Yarn project so its React/Vite dependencies stay separate from Hardhat.
 - Shared skills live in `.agents/skills/`. Claude discovers the same files through `.claude/skills`; `CLAUDE.md` imports this file.
+- Run `yarn test:workflow` after changes to the browser-session wrapper or its ownership guidance.
 - Use `web-development` for frontend work and `code-quality-review` for substantive diffs. Keep checks proportional to the affected surface.
 - Preserve unrelated user changes. Commit, push, publish, and deploy only when authorized by the user.
