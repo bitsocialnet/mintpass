@@ -64,6 +64,7 @@ owner_file="$lock_dir/owner"
 started_file="$lock_dir/started-at"
 workspace_file="$lock_dir/workspace"
 launcher_file="$lock_dir/launcher-pid"
+launcher_started_file="$lock_dir/launcher-started-at"
 guard_dir="${lock_dir}.guard"
 guard_held=false
 
@@ -93,12 +94,18 @@ try_guard() {
 }
 
 require_guard() {
-  if ! try_guard; then
-    echo "pw-session: another reservation operation holds $guard_dir; retry later" >&2
-    echo "pw-session: if abandoned, confirm its recorded process has stopped before removing the guard" >&2
-    return 1
-  fi
+  local attempts=0
+  until try_guard; do
+    if [ "$attempts" -ge 100 ]; then
+      echo "pw-session: reservation operation still holds $guard_dir after 10s; retry later" >&2
+      echo "pw-session: if abandoned, confirm its recorded process has stopped before removing the guard" >&2
+      return 1
+    fi
+    attempts=$((attempts + 1))
+    sleep 0.1
+  done
 }
+
 default_wait_seconds=300
 poll_seconds="${PW_SESSION_POLL_SECONDS:-5}"
 
@@ -153,6 +160,7 @@ session_state() {
 
 write_lock_metadata() {
   printf '%s\n' "$$" >"$launcher_file"
+  TZ=UTC LC_ALL=C ps -p "$$" -o lstart= >"$launcher_started_file"
   printf '%s\n' "$1" >"$owner_file"
   date -u '+%Y-%m-%dT%H:%M:%SZ' >"$started_file"
   printf '%s\n' "$workspace" >"$workspace_file"
@@ -161,11 +169,19 @@ write_lock_metadata() {
 # A new lock can be visible before its metadata, and the browser is not listed
 # until `open` finishes. Neither window means that the owner has died.
 lock_state() {
-  local owner="$1" launcher modified now
+  local owner="$1" launcher launcher_started process_started modified now
   launcher="$(cat "$launcher_file" 2>/dev/null || true)"
   if [[ "$launcher" =~ ^[0-9]+$ ]] && kill -0 "$launcher" 2>/dev/null; then
-    echo initializing
-  elif [ -z "$owner" ]; then
+    launcher_started="$(cat "$launcher_started_file" 2>/dev/null || true)"
+    process_started="$(TZ=UTC LC_ALL=C ps -p "$launcher" -o lstart= 2>/dev/null || true)"
+    # Compare process birth times too: a crashed launcher's PID can be reused.
+    # Old wrappers lack the birth time; keep those reservations conservative.
+    if [ -z "$launcher_started" ] || [ -z "$process_started" ] || [ "$launcher_started" = "$process_started" ]; then
+      echo initializing
+      return 0
+    fi
+  fi
+  if [ -z "$owner" ]; then
     modified="$(stat -c %Y "$lock_dir" 2>/dev/null || stat -f %m "$lock_dir" 2>/dev/null || true)"
     now="$(date +%s)"
     if [[ "$modified" =~ ^[0-9]+$ ]] && [ "$((now - modified))" -ge 60 ]; then
@@ -290,7 +306,7 @@ release() {
     return 1
   fi
 
-  rm -f "$owner_file" "$started_file" "$workspace_file" "$launcher_file"
+  rm -f "$owner_file" "$started_file" "$workspace_file" "$launcher_file" "$launcher_started_file"
   rmdir "$lock_dir"
   echo "pw-session: released browser slot for '$session'"
 }
@@ -343,7 +359,11 @@ case "$command" in
     # Guarded expansion: Bash 3.2 (macOS /bin/bash) errors on an empty array
     # under `set -u`.
     if ! "$playwright_cli" -s="$session" open ${open_args[@]+"${open_args[@]}"}; then
-      require_guard
+      if ! require_guard; then
+        echo "pw-session: open failed and '$session' may still be running; retry '$0 close $session' after the guard frees" >&2
+        exit 1
+      fi
+      rm -f "$launcher_file" "$launcher_started_file"
       if ! "$playwright_cli" -s="$session" close; then
         echo "pw-session: could not close browser '$session'; keeping its reservation" >&2
         exit 1
@@ -351,9 +371,6 @@ case "$command" in
       release "$session"
       exit 1
     fi
-    # Keep the launcher PID until this command exits, protecting the remaining
-    # setup as well. Once it exits, liveness comes from the browser listing.
-
     # Hide the dev-only Agentation toolbar so annotations cannot intercept driven clicks.
     # Source inspection remains available; profiling/visual-testing flags stay untouched.
     # Init scripts apply on later loads, hence the reload when a page is already open.
@@ -366,6 +383,11 @@ case "$command" in
     else
       echo "pw-session: could not disable the dev toolbar; clicks in the bottom-right corner may be intercepted" >&2
     fi
+    if ! require_guard; then
+      echo "pw-session: '$session' opened but setup cleanup is blocked; retry '$0 close $session' after the guard frees" >&2
+      exit 1
+    fi
+    rm -f "$launcher_file" "$launcher_started_file"
     ;;
   close)
     session="${2:-}"

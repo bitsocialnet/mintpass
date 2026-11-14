@@ -158,7 +158,7 @@ test("an abandoned ownerless lock is reclaimable after the initialization grace 
   assert.equal(f.run("close", "first").status, 0);
 });
 
-async function pausedOperation(t, f, args, flag) {
+async function pausedOperation(t, f, args, flag, expectedCode = 0) {
   const child = spawn("bash", [wrapper, ...args], {
     env: { ...f.env, [flag]: "1" },
     stdio: ["ignore", "pipe", "pipe"],
@@ -178,7 +178,7 @@ async function pausedOperation(t, f, args, flag) {
   await waitForFile(path.join(f.dir, "paused"));
   return async () => {
     await writeFile(path.join(f.dir, "resume"), "");
-    assert.equal(await exited, 0, output);
+    assert.equal(await exited, expectedCode, output);
   };
 }
 
@@ -260,3 +260,41 @@ test("an unavailable CLI cannot free a live browser reservation", async (t) => {
   f.env.PLAYWRIGHT_CLI_BIN = cli;
   assert.equal(f.run("close", "first").status, 0);
 });
+
+test("a reused launcher PID does not keep an abandoned reservation initializing", async (t) => {
+  const f = await fixture(t);
+  assert.equal(f.run("open", "first").status, 0);
+  await rm(path.join(f.dir, "session-first"));
+  await writeFile(path.join(f.lock, "launcher-pid"), String(process.pid));
+  await writeFile(path.join(f.lock, "launcher-started-at"), "an earlier process incarnation");
+  assert.equal(f.run("open", "second").status, 0);
+  assert.equal(f.run("close", "second").status, 0);
+});
+
+test("failed-open cleanup waits for a busy guard and closes the partial browser", async (t) => {
+  const f = await fixture(t);
+  f.env.PW_TEST_FAIL_OPEN = "1";
+  const resume = await pausedOperation(t, f, ["open", "first"], "PW_TEST_PAUSE_OPEN", 1);
+  await mkdir(`${f.lock}.guard`);
+  const freeGuard = new Promise((resolve) => setTimeout(resolve, 250)).then(() =>
+    rm(`${f.lock}.guard`, { recursive: true }),
+  );
+  await resume();
+  await freeGuard;
+  await assert.rejects(readFile(path.join(f.dir, "session-first")), { code: "ENOENT" });
+  await assert.rejects(readFile(path.join(f.lock, "owner")), { code: "ENOENT" });
+});
+
+for (const failOpen of [false, true]) {
+  test(`initialization metadata is cleared after open exits (failed open: ${failOpen})`, async (t) => {
+    const f = await fixture(t);
+    if (failOpen) {
+      f.env.PW_TEST_FAIL_OPEN = "1";
+      f.env.PW_TEST_FAIL_CLOSE = "1";
+    }
+    assert.equal(f.run("open", "first").status, failOpen ? 1 : 0);
+    await assert.rejects(readFile(path.join(f.lock, "launcher-pid")), { code: "ENOENT" });
+    delete f.env.PW_TEST_FAIL_CLOSE;
+    assert.equal(f.run("close", "first").status, 0);
+  });
+}
