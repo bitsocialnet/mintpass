@@ -1,0 +1,6 @@
+# mintpass.org deploys only web/ (the Vercel project's Root Directory). Never upload anything
+# outside the site, or any local secrets inside it.
+/*
+!/web
+.env*
+**/.env*

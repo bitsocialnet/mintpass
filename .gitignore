@@ -17,3 +17,4 @@ deployments/*-hardhat.args.js
 # Left by a record write that was interrupted part-way (scripts/deploy-record.ts).
 deployments/*.tmp
 .DS_Store
+.vercel/
