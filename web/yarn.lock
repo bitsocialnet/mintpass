@@ -199,6 +199,7 @@ __metadata:
     agentation: "npm:3.0.2"
     bippy: "npm:0.7.3"
     element-source: "npm:0.0.5"
+    modern-web-guidance: "npm:1.0.0"
     oxfmt: "npm:0.20.0"
     oxlint: "npm:1.56.0"
     portless: "npm:0.11.1"
@@ -2005,6 +2006,15 @@ __metadata:
   dependencies:
     minipass: "npm:^7.1.2"
   checksum: 10c0/5aad75ab0090b8266069c9aabe582c021ae53eb33c6c691054a13a45db3b4f91a7fb1bd79151e6b4e9e9a86727b522527c0a06ec7d45206b745d54cd3097bcec
+  languageName: node
+  linkType: hard
+
+"modern-web-guidance@npm:1.0.0":
+  version: 1.0.0
+  resolution: "modern-web-guidance@npm:1.0.0"
+  bin:
+    modern-web-guidance: skills/modern-web-guidance/modern-web.mjs
+  checksum: 10c0/227875ba43c9ef9390c5bdc4d98c309930e1a7848b10b3558bf810b650d2a94fb3d0239627f8fe6ed1e921a1e81be417e629883e2d717bb1a641cb60617b3a38
   languageName: node
   linkType: hard
 
