@@ -118,6 +118,7 @@ The script refuses to deploy the same pass twice. A mistake in the parameters ca
 - [ ] `@bitsocial/evm-contract-challenge`: point captcha-free posting at the mainnet addresses.
 - [ ] 5chan and Seedit: purchase page (`quote`, then `purchase(accountAddress, planId)` with a small buffer), expiry display, renewal, and the "back up your account first" warning before paying.
 - [ ] README: add a "Deploy your own pass" section for other projects.
+- [ ] Tor users: buying the 5chan Pass with XMR, and posting and uploading through Tor with it. See [TOR-AND-XMR.md](TOR-AND-XMR.md).
 - [ ] Update BSIP-13 and this file if the Safe details they describe have changed.
 
 ## Website (PR 29)
