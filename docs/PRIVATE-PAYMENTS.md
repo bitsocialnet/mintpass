@@ -27,12 +27,12 @@ None of these routes needs a contract change.
 | Monero relay ([TOR-AND-XMR.md](TOR-AND-XMR.md)) | The relay's hot wallet | The relay operator |
 | Someone else pays (a friend, an exchange withdrawal to a fresh address) | That person or fresh address | Whoever pays, or the exchange, which knows the account |
 
-**Railgun.** A shielded WETH balance can call contracts through Relay Adapt (`0xAc9f360Ae85469B27aEDdEaFC579Ef2d052aD405` on Ethereum) in one transaction. Relay Adapt unshields, unwraps to ETH, calls `purchase(holder, planId)` with the value attached, and shields what is left back to the user. A broadcaster submits it and is paid from a private note, so no public wallet of the user's appears. ETHBEAT lists $94.25M held and about 5,080 deposits in the last 30 days, which is a large anonymity set. Fees: 0.25% to shield, 0.25% to unshield, plus the broadcaster's fee. RAIL stakers can upgrade the core contract with no delay.
+**Railgun.** A shielded WETH balance can call contracts through Relay Adapt (`0xAc9f360Ae85469B27aEDdEaFC579Ef2d052aD405` on Ethereum) in one transaction. Relay Adapt unshields, unwraps to ETH, calls `purchase(holder, planId)` with the value attached, and shields what is left back to the user. A broadcaster submits it and is paid from a private note, so no public wallet of the user's appears. On 2026-11-27 ETHBEAT listed $94.25M held across eight assets and about 5,080 deposits in the last 30 days. Those figures cover every asset. The set that hides a purchase is the WETH pool's, which ETHBEAT does not break out, so it is smaller. Fees: 0.25% to shield, 0.25% to unshield, plus the broadcaster's fee. RAIL stakers can upgrade the core contract with no delay.
 
 - `purchase` refunds any excess to `msg.sender`, which here is Relay Adapt. The call sequence must wrap and reshield that refund in the same transaction, or it stays in Relay Adapt for the next caller.
 - To verify before recommending it: a July 2025 Reddit report said Relay Adapt calls were disabled on Ethereum at the time. Check the current state, then buy one real pass this way once the pass is on mainnet.
 
-**Privacy Pools v2 (0xbow).** Live on Ethereum mainnet for ETH, USDC and USDT. A user withdraws to a fresh address through the relayer, which pays the gas, and the fresh address then calls `purchase`. The anonymity set is small: ETHBEAT lists $716K held and 181 deposits in 30 days. 0xbow runs the ASP, the only relayer and the website, a multisig can upgrade the core contracts with no delay, and the ASP can freeze notes; ragequit gets the funds out publicly. ETHBEAT also notes that the ASP update that first approves a deposit often leaves one candidate, and that 0xbow sees the IPs of both the deposit and the withdrawal sessions.
+**Privacy Pools v2 (0xbow).** Live on Ethereum mainnet for ETH, USDC and USDT. A user withdraws to a fresh address through the relayer, which pays the gas, and the fresh address then calls `purchase`. The anonymity set is small: on 2026-11-27 ETHBEAT listed $716K held and 181 deposits in 30 days, across all its assets. 0xbow runs the ASP, the only relayer and the website, a multisig can upgrade the core contracts with no delay, and the ASP can freeze notes; ragequit gets the funds out publicly. ETHBEAT also notes that the ASP update that first approves a deposit often leaves one candidate, and that 0xbow sees the IPs of both the deposit and the withdrawal sessions.
 
 **Tornado Cash.** It was removed from the sanctions list in March 2025, but its developer's retrial on the money-laundering and sanctions counts is set for 26 April 2027. 5chan should neither integrate it nor point users to it while that case is open.
 
@@ -40,7 +40,7 @@ None of these routes needs a contract change.
 
 - **Timing and amount.** Shielding exactly the pass price and buying a few minutes later links the two. Shield a round amount, and buy later.
 - **The fresh address.** If the main wallet ever funds it, or it is used for anything else, the link comes back.
-- **Network.** The RPC provider, the broadcaster or relayer, and 0xbow can see IP addresses. Use Tor, or an RPC the user trusts.
+- **Network.** The RPC provider, the broadcaster or relayer, and 0xbow can see IP addresses. A trusted RPC hides the user only from the RPC provider. The connections to the broadcaster or relayer and to 0xbow's ASP and website need Tor as well.
 - **The holder itself.** It stays a public identifier for the account: every post with the wallet entry, on every board, names the same address, and the chain shows when it bought and renewed. As long as the holder never sends a transaction, that is all it reveals.
 
 **Client work in 5chan:**
@@ -55,20 +55,24 @@ A post would prove that its author holds an unexpired pass without naming it. No
 
 **Sketch on Semaphore v4:**
 
-- **Buying.** `purchase(identityCommitment, planId)`. The client creates a Semaphore identity, and the contract stores an expiry per commitment and inserts the commitment into a LeanIMT group. A renewal is a purchase for the same commitment; the chain links renewals, as it does today.
-- **Expiry.** Anyone can call `prune(commitment)` once a commitment has expired, which removes it from the tree. This keeps Semaphore's circuits and trusted setup unchanged. A custom circuit that proves `expiresAt > now` inside the leaf would avoid pruning, but it would need its own audit.
+- **Buying.** `purchase(identityCommitment, planId)`. The client creates a Semaphore identity, and the contract inserts the leaf `Poseidon(identityCommitment, expiresAt)` into a LeanIMT tree. A renewal is a purchase for the same commitment, which replaces its leaf with one that carries the new expiry. The chain links renewals, as it does today.
+- **Expiry.** The proof itself must show that the pass is unexpired, because the verifier sees only a root and a nullifier and cannot look up a leaf's expiry. The circuit adds one check to Semaphore's: the leaf's `expiresAt` is later than a public day number `t`, which the verifier accepts only if it is today or yesterday by its own clock. That makes it a custom circuit, with its own audit and trusted setup.
+  - The alternative keeps Semaphore's circuits unchanged. There is one group per month, a purchase adds the commitment to every month it covers, and the verifier accepts only the current month's group. That costs one insertion per month of the plan (12 for a year) and rounds expiry to the month.
+  - Pruning expired leaves cannot replace either design. Nothing makes anyone call it, and until someone does, an expired pass still produces valid proofs.
 - **Posting.** The client proves membership with `scope` set to the community's public key and `message` set to the author key address, so the proof cannot be moved to another author key. The nullifier, `Poseidon(scope, secret)`, is the same for every post that uses that pass in one community and different in every other community.
 - **Where the proof travels.** In the challenge exchange, which pkc-js encrypts to the community. Readers never see the proof; only the community sees the nullifier.
-- **Verifying.** A new challenge runs the Groth16 check off-chain and confirms that the root is one the contract held recently. Each purchase changes the root, so the challenge must accept roots from a short window, and that window is how long a pruned pass keeps working.
+- **Verifying.** A new challenge runs the Groth16 check off-chain and confirms that the root is one the contract has recorded. Expiry lives in the leaf, so an older root grants nothing a newer one would not, and the challenge needs no window of recent roots. The contract records each root it produces, so the challenge can check a root with one call.
 - **Bans.** The community bans the nullifier, not the author key. A new author key with the same pass produces the same nullifier, so the ban holds, and getting around it costs a new pass. This meets the Tor plan's prerequisite, a ban that follows the pass, without a single identifier that works across communities.
 - **Voting.** The `erc5192-min-balance` rule reads `balanceOf(address)`. A ZK rule with `scope` set to the contest id would give one vote per pass per contest. Semaphore was designed for this kind of vote.
-- **Migrating MintPass holders.** A holder signs once to register a commitment for the rest of its time. That publicly links the holder to the commitment, but posts carry only nullifiers, which nobody can tie to a commitment without the secret. This is why the ZK pass can be a sibling contract deployed later.
+- **Migrating MintPass holders.** A holder signs once to register a commitment for the rest of its time. That publicly links the holder to the commitment. A proof shows only that its author is in the tree, not which member, so migration alone does not reveal which posts are the holder's, subject to the anonymity set below. This is why the ZK pass can be a sibling contract deployed later.
+- **Anonymity set.** A proof hides its author only among the unexpired passes in the tree. With one pass, every proof is that pass's. With a few, a community can narrow a nullifier to a few commitments. For a migrated holder, or a buyer who paid from a public wallet, the commitment leads straight back to that address. The first posts under a new nullifier soon after a purchase also point to that purchase. The doc assumes no size: the set is however many passes the ZK contract holds, starting at zero.
 
 **Costs and unknowns:**
 
-- A new contract and its audit. Poseidon hashing on L1 makes each purchase cost more gas than today's mint; measure it.
-- Proving cost in the client. Semaphore publishes Node and browser benchmarks (as images); measure on low-end phones in 5chan before committing. One proof per author key, community and root window keeps the work down.
-- A BSIP for the proof format in challenge answers, the `scope` and `message` bindings, and the root window.
+- A new contract and its audit. Poseidon hashing and root recording on L1 make each purchase cost more gas than today's mint; measure it.
+- The expiry check makes the circuit custom, so it needs an audit and a trusted setup of its own. The month-group alternative avoids both at the cost of gas and coarser expiry.
+- Proving cost in the client. Semaphore publishes Node and browser benchmarks (as images); measure on low-end phones in 5chan before committing. One proof per author key, community and day keeps the work down.
+- A BSIP for the proof format in challenge answers, the `scope` and `message` bindings, and the rule for the public day number `t`.
 - The same verifier in the spam blocker's upload authorization and in directory voting.
 - It removes the pass as a link between communities, not other links. If a client uses one author key everywhere, its posts stay linkable through that key.
 
