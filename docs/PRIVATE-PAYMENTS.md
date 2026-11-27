@@ -40,7 +40,7 @@ None of these routes needs a contract change.
 
 - **Timing and amount.** Shielding exactly the pass price and buying a few minutes later links the two. Shield a round amount, and buy later.
 - **The fresh address.** If the main wallet ever funds it, or it is used for anything else, the link comes back.
-- **Network.** The RPC provider, the broadcaster or relayer, and 0xbow can see IP addresses. Only Tor hides the address from them: an RPC the user trusts still sees it. Route every one of these connections through Tor, including the RPC.
+- **Network.** The RPC provider, the broadcaster or relayer, and 0xbow can see IP addresses. Trusting a provider does not hide the address from it. Tor hides it from all of them; a VPN or other proxy also does, but its own provider then sees the address. Route every one of these connections, the RPC included, through Tor or such a proxy.
 - **The holder itself.** It stays a public identifier for the account: every post with the wallet entry, on every board, names the same address, and the chain shows when it bought and renewed. As long as the holder never sends a transaction, that is all it reveals.
 
 **Client work in 5chan:**
