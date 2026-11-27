@@ -40,7 +40,7 @@ None of these routes needs a contract change.
 
 - **Timing and amount.** Shielding exactly the pass price and buying a few minutes later links the two. Shield a round amount, and buy later.
 - **The fresh address.** If the main wallet ever funds it, or it is used for anything else, the link comes back.
-- **Network.** The RPC provider, the broadcaster or relayer, and 0xbow can see IP addresses. A trusted RPC hides the user only from the RPC provider. The connections to the broadcaster or relayer and to 0xbow's ASP and website need Tor as well.
+- **Network.** The RPC provider, the broadcaster or relayer, and 0xbow can see IP addresses. Only Tor hides the address from them: an RPC the user trusts still sees it. Route every one of these connections through Tor, including the RPC.
 - **The holder itself.** It stays a public identifier for the account: every post with the wallet entry, on every board, names the same address, and the chain shows when it bought and renewed. As long as the holder never sends a transaction, that is all it reveals.
 
 **Client work in 5chan:**
@@ -55,8 +55,12 @@ A post would prove that its author holds an unexpired pass without naming it. No
 
 **Sketch on Semaphore v4:**
 
-- **Buying.** `purchase(identityCommitment, planId)`. The client creates a Semaphore identity, and the contract inserts the leaf `Poseidon(identityCommitment, expiresAt)` into a LeanIMT tree. A renewal is a purchase for the same commitment, which replaces its leaf with one that carries the new expiry. The chain links renewals, as it does today.
-- **Expiry.** The proof itself must show that the pass is unexpired, because the verifier sees only a root and a nullifier and cannot look up a leaf's expiry. The circuit adds one check to Semaphore's: the leaf's `expiresAt` is later than a public day number `t`, which the verifier accepts only if it is today or yesterday by its own clock. That makes it a custom circuit, with its own audit and trusted setup.
+- **Buying.** `purchase(identityCommitment, planId)`. The client creates a Semaphore identity. The contract stores the commitment's expiry and inserts the leaf `Poseidon(identityCommitment, expiresAt)` into a LeanIMT tree.
+  - A renewal is a purchase for the same commitment. The contract extends the stored expiry and appends a new leaf carrying it, and the old leaf lapses.
+  - An insertion needs no Merkle path from the buyer, so a renewal prepared in advance, such as a Railgun call, still lands after another purchase changes the tree. Replacing the old leaf instead would need its sibling nodes, and the renewal would revert in that case.
+  - The identity stays the same, so its nullifiers do too. The chain links renewals, as it does today.
+- **Expiry.** The proof itself must show that the pass is unexpired, because the verifier sees only a root and a nullifier and cannot look up a leaf's expiry. The circuit adds one check to Semaphore's: the leaf's `expiresAt` is later than a public Unix time `t`. The verifier accepts `t` only within five minutes of its own clock, the allowance BSIP-22 uses. A pass then stops working within five minutes of `expiresAt`, the moment `balanceOf` stops counting it. That makes it a custom circuit, with its own audit and trusted setup.
+  - A day number for `t` would let a client reuse one proof all day. But if the verifier accepts today's or yesterday's day number, an expired pass keeps working for up to two days after `expiresAt`. Choose that only as a stated grace period.
   - The alternative keeps Semaphore's circuits unchanged. There is one group per month, a purchase adds the commitment to every month it covers, and the verifier accepts only the current month's group. That costs one insertion per month of the plan (12 for a year) and rounds expiry to the month.
   - Pruning expired leaves cannot replace either design. Nothing makes anyone call it, and until someone does, an expired pass still produces valid proofs.
 - **Posting.** The client proves membership with `scope` set to the community's public key and `message` set to the author key address, so the proof cannot be moved to another author key. The nullifier, `Poseidon(scope, secret)`, is the same for every post that uses that pass in one community and different in every other community.
@@ -69,10 +73,10 @@ A post would prove that its author holds an unexpired pass without naming it. No
 
 **Costs and unknowns:**
 
-- A new contract and its audit. Poseidon hashing and root recording on L1 make each purchase cost more gas than today's mint; measure it.
+- A new contract and its audit. Poseidon hashing and root recording on L1 make each purchase, renewals included, cost more gas than today's mint; measure it. Each renewal also adds a leaf, so the tree grows with every purchase.
 - The expiry check makes the circuit custom, so it needs an audit and a trusted setup of its own. The month-group alternative avoids both at the cost of gas and coarser expiry.
-- Proving cost in the client. Semaphore publishes Node and browser benchmarks (as images); measure on low-end phones in 5chan before committing. One proof per author key, community and day keeps the work down.
-- A BSIP for the proof format in challenge answers, the `scope` and `message` bindings, and the rule for the public day number `t`.
+- Proving cost in the client. Semaphore publishes Node and browser benchmarks (as images); measure on low-end phones in 5chan before committing. Because `t` must be within five minutes, the client makes a fresh proof for nearly every publication, so proving time per post is the number to measure.
+- A BSIP for the proof format in challenge answers, the `scope` and `message` bindings, and the five-minute rule for the public time `t`.
 - The same verifier in the spam blocker's upload authorization and in directory voting.
 - It removes the pass as a link between communities, not other links. If a client uses one author key everywhere, its posts stay linkable through that key.
 
