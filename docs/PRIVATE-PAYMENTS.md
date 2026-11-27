@@ -67,10 +67,12 @@ A post would prove that its author holds an unexpired pass without naming it. No
 - **Where the proof travels.** In the challenge exchange, which pkc-js encrypts to the community. Readers never see the proof; only the community sees the nullifier.
 - **Verifying.** A new challenge runs the Groth16 check off-chain and confirms that the root is one the contract has recorded. Expiry lives in the leaf, so an older root grants nothing a newer one would not, and the challenge needs no window of recent roots. The contract records each root it produces, so the challenge can check a root with one call.
 - **Bans.** The community bans the nullifier, not the author key. A new author key with the same pass produces the same nullifier, so the ban holds, and getting around it costs a new pass. This meets the Tor plan's prerequisite, a ban that follows the pass, without a single identifier that works across communities.
+  - Bans placed on a holder address under today's challenge do not carry over. After migration the community sees only a nullifier and cannot tell which address it belongs to.
+  - A community that accepts both the address challenge and the ZK challenge lets an author banned under one switch to the other. A community should accept one kind at a time, and moving a board to the ZK pass resets its address bans. That is a known cost of migrating.
 - **Voting.** The `erc5192-min-balance` rule reads `balanceOf(address)`. A ZK rule with `scope` set to the contest id would give one vote per pass per contest. Semaphore was designed for this kind of vote.
 - **Migrating MintPass holders.** A holder signs once to register a commitment, and the sibling contract inserts a leaf with the pass's current `expiresAt`.
   - The contract accepts exactly one commitment per MintPass `tokenId`, and never replaces it. A second commitment would carry new nullifiers, so a banned holder could escape the ban, or vote twice in a contest, without buying a new pass.
-  - When the holder renews on MintPass, anyone can call `sync(tokenId)`. It reads `expiresAt(tokenId)` from MintPass and appends a leaf for the stored commitment, the same way a ZK renewal does.
+  - When the holder renews on MintPass, anyone can call `sync(tokenId)`. It reads `expiresAt(tokenId)` from MintPass and appends a leaf for the stored commitment, the same way a ZK renewal does. It appends only when that expiry is later than the one last stored for the commitment, and does nothing otherwise, so repeated calls cannot pad the tree. The ZK renewal path follows the same rule.
   - Registration publicly links the holder to the commitment. A proof shows only that its author is in the tree, not which member, so migration alone does not reveal which posts are the holder's, subject to the anonymity set below. This is why the ZK pass can be a sibling contract deployed later.
 - **Anonymity set.** A proof hides its author only among the unexpired passes in the tree. With one pass, every proof is that pass's. With a few, a community can narrow a nullifier to a few commitments. For a migrated holder, or a buyer who paid from a public wallet, the commitment leads straight back to that address. The first posts under a new nullifier soon after a purchase also point to that purchase. The doc assumes no size: the set is however many passes the ZK contract holds, starting at zero.
 
@@ -93,7 +95,7 @@ A post would prove that its author holds an unexpired pass without naming it. No
 
 1. **Now:** Level 1. Add the warning and the "pay from another wallet" path to the 5chan purchase box, keep the Monero relay plan, and test the Railgun route with a real purchase after deployment.
 2. **Do not change MintPass before deployment for this.** A ZK pass can be a sibling contract with a migration path.
-3. **Decide on the ZK pass before building the wallet-based ban linkage in the Tor plan.** Both solve the same problem, and building the wallet-based version first would mean doing that work twice.
+3. **Decide on the ZK pass before building the wallet-based ban linkage in the Tor plan.** Both solve the same problem. Building the wallet-based version first would mean doing that work twice, and its bans would not carry over to the ZK pass.
 
 ## Decisions needed
 
